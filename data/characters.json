@@ -2557,6 +2557,12 @@
         "Imagen": "https://i1.sndcdn.com/artworks-000361167327-tt3dvq-t500x500.jpg",
         "Fuente": "Slow Start",
         "Valor": 20000
+      },
+      {
+        "Nombre": "Hiroto Suwa",
+        "Imagen": "https://static.wikia.nocookie.net/orangetakanoichigo/images/8/89/Suwa_present_02.png/revision/latest/scale-to-width/360?cb=20160711032611",
+        "Fuente": "Orange",
+        "Valor": 35000
       }
     ]
   }
