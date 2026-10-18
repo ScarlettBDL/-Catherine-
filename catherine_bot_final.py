@@ -256,6 +256,7 @@ GITHUB_ARCHIVO_MEMORIA = "data/bot_memory.json"
 GITHUB_ARCHIVO_DOLAR = "data/dolar.json"
 GITHUB_ARCHIVO_NIVELES = "data/niveles.json"
 GITHUB_ARCHIVO_MISIONES = "data/misiones.json"
+GITHUB_ARCHIVO_MISIONES_DIARIAS = "data/misiones_diarias.json"
 
 # Los balances viven en RAM mientras el bot corre; solo se sincronizan con
 # GitHub cada 6hs (o a mano con !datasave) para no golpear la API todo el tiempo
@@ -296,6 +297,12 @@ misiones_cache = {}
 misiones_sha = None
 misiones_cargados = False
 hubo_cambios_misiones_sin_guardar = False
+
+# Misiones diarias
+misiones_diarias_cache = {}
+misiones_diarias_sha = None
+misiones_diarias_cargados = False
+hubo_cambios_misiones_diarias_sin_guardar = False
 
 # Personajes para !rw: se cargan desde data/rw.json en el repo. Normalmente lo
 # editás a mano en GitHub, pero !buscarimagenes también puede escribirlo.
@@ -1172,20 +1179,72 @@ async def intentar_dar_xp_mensaje(usuario):
     dar_xp(user_id, XP_POR_MENSAJE)
 
 MISIONES_POOL = [
-    {"id": "work_50",        "tipo": "work_count",   "meta": 50,         "xp": 100, "pts": 1, "desc": "Usá `!w` 50 veces"},
-    {"id": "work_100",       "tipo": "work_count",   "meta": 100,        "xp": 200, "pts": 2, "desc": "Usá `!w` 100 veces"},
-    {"id": "work_earn_500k", "tipo": "work_earn",    "meta": 500_000,    "xp": 150, "pts": 1, "desc": "Ganá 500.000 Pesos con `!w`"},
-    {"id": "work_earn_1m",   "tipo": "work_earn",    "meta": 1_000_000,  "xp": 300, "pts": 2, "desc": "Ganá 1.000.000 Pesos con `!w`"},
-    {"id": "bet_win_500k",   "tipo": "bet_win",      "meta": 500_000,    "xp": 200, "pts": 1, "desc": "Ganá 500.000 Pesos brutos en apuestas"},
-    {"id": "bet_win_1m",     "tipo": "bet_win",      "meta": 1_000_000,  "xp": 350, "pts": 2, "desc": "Ganá 1.000.000 Pesos brutos en apuestas"},
-    {"id": "bet_total_5m",   "tipo": "bet_total",    "meta": 5_000_000,  "xp": 200, "pts": 1, "desc": "Apostá 5.000.000 Pesos en total (ganes o pierdas)"},
-    {"id": "rw_claim_3",     "tipo": "rw_claim",     "meta": 3,          "xp": 250, "pts": 2, "desc": "Reclamá 3 personajes en `!rw`"},
-    {"id": "buy_20",         "tipo": "buy_count",    "meta": 20,         "xp": 100, "pts": 1, "desc": "Comprá 20 items en la tienda"},
-    {"id": "mendigar_recv_200k", "tipo": "mendigar_recv", "meta": 200_000, "xp": 150, "pts": 1, "desc": "Recibí 200.000 Pesos en `!mendigar`"},
+    # Trabajo
+    {"id": "work_100",            "tipo": "work_count",   "meta": 100,        "xp": 200,  "pts": 2, "desc": "Usá `!w` 100 veces"},
+    {"id": "work_200",            "tipo": "work_count",   "meta": 200,        "xp": 450,  "pts": 4, "desc": "Usá `!w` 200 veces"},
+    {"id": "work_earn_750k",      "tipo": "work_earn",    "meta": 750_000,    "xp": 250,  "pts": 2, "desc": "Ganá 750.000 Pesos con `!w`"},
+    {"id": "work_earn_1m5",       "tipo": "work_earn",    "meta": 1_500_000,  "xp": 500,  "pts": 4, "desc": "Ganá 1.500.000 Pesos con `!w`"},
+    # Apuestas
+    {"id": "bet_win_2m",          "tipo": "bet_win",      "meta": 2_000_000,  "xp": 600,  "pts": 4, "desc": "Ganá 2.000.000 Pesos brutos en apuestas"},
+    {"id": "bet_win_5m",          "tipo": "bet_win",      "meta": 5_000_000,  "xp": 1200, "pts": 8, "desc": "Ganá 5.000.000 Pesos brutos en apuestas"},
+    {"id": "bet_total_30m",       "tipo": "bet_total",    "meta": 30_000_000, "xp": 700,  "pts": 5, "desc": "Apostá 30.000.000 Pesos en total (ganes o pierdas)"},
+    {"id": "apuestas_200",        "tipo": "apuestas_count","meta": 200,       "xp": 500,  "pts": 4, "desc": "Hacé 200 apuestas (entre `!cf`, `!rt` y `!bj`)"},
+    # Gacha / rw
+    {"id": "rw_claim_10",         "tipo": "rw_claim",     "meta": 10,         "xp": 500,  "pts": 4, "desc": "Reclamá 10 personajes en `!rw`"},
+    {"id": "rw_claim_15",         "tipo": "rw_claim",     "meta": 15,         "xp": 800,  "pts": 6, "desc": "Reclamá 15 personajes en `!rw`"},
+    {"id": "rw_tiradas_15",       "tipo": "rw_count",     "meta": 15,         "xp": 400,  "pts": 3, "desc": "Tirá `!rw` 15 veces"},
+    # Tienda / items
+    {"id": "buy_40",              "tipo": "buy_count",    "meta": 40,         "xp": 200,  "pts": 2, "desc": "Comprá 40 items en la tienda"},
+    {"id": "buy_80",              "tipo": "buy_count",    "meta": 80,         "xp": 400,  "pts": 3, "desc": "Comprá 80 items en la tienda"},
+    {"id": "usar_20",             "tipo": "usar_count",   "meta": 20,         "xp": 250,  "pts": 2, "desc": "Usá 20 items de tu inventario"},
+    # Social
+    {"id": "pay_15",              "tipo": "pay_count",    "meta": 15,         "xp": 250,  "pts": 2, "desc": "Hacé 15 pagos con `!pay`"},
+    {"id": "dar_8",               "tipo": "dar_count",    "meta": 8,          "xp": 250,  "pts": 2, "desc": "Regalá items 8 veces con `!dar`"},
+    {"id": "robos_20",            "tipo": "robos_count",  "meta": 20,         "xp": 300,  "pts": 2, "desc": "Intentá robar 20 veces con `!robar`"},
+    {"id": "robos_exitosos_3",    "tipo": "robos_exitosos","meta": 3,         "xp": 1000, "pts": 7, "desc": "Lográ 3 robos exitosos con `!robar`"},
+    # Mendigar
+    {"id": "mendigar_recv_500k",  "tipo": "mendigar_recv","meta": 500_000,    "xp": 350,  "pts": 2, "desc": "Recibí 500.000 Pesos en `!mendigar`"},
+    {"id": "mendigar_count_7",    "tipo": "mendigar_count","meta": 7,         "xp": 250,  "pts": 2, "desc": "Usá `!mendigar` 7 veces"},
+    # Dólar
+    {"id": "dolar_comprado_15",   "tipo": "dolar_comprado","meta": 15,        "xp": 300,  "pts": 2, "desc": "Comprá 15 Dólares"},
+    {"id": "dolar_vendido_15",    "tipo": "dolar_vendido", "meta": 15,        "xp": 300,  "pts": 2, "desc": "Vendé 15 Dólares"},
 ]
 
-XP_BONUS_MISIONES_COMPLETAS = 300
-PTS_BONUS_MISIONES_COMPLETAS = 3
+XP_BONUS_MISIONES_COMPLETAS = 400
+PTS_BONUS_MISIONES_COMPLETAS = 5
+
+MISIONES_DIARIAS_POOL = [
+    # Trabajo
+    {"id": "d_work_8",            "tipo": "work_count",   "meta": 8,          "xp": 50,   "pts": 1, "desc": "Usá `!w` 8 veces"},
+    {"id": "d_work_12",           "tipo": "work_count",   "meta": 12,         "xp": 80,   "pts": 1, "desc": "Usá `!w` 12 veces"},
+    {"id": "d_work_earn_60k",     "tipo": "work_earn",    "meta": 60_000,     "xp": 50,   "pts": 1, "desc": "Ganá 60.000 Pesos con `!w`"},
+    {"id": "d_work_earn_100k",    "tipo": "work_earn",    "meta": 100_000,    "xp": 80,   "pts": 1, "desc": "Ganá 100.000 Pesos con `!w`"},
+    # Apuestas
+    {"id": "d_bet_win_50k",       "tipo": "bet_win",      "meta": 50_000,     "xp": 60,   "pts": 1, "desc": "Ganá 50.000 Pesos brutos en apuestas"},
+    {"id": "d_bet_total_500k",    "tipo": "bet_total",    "meta": 500_000,    "xp": 60,   "pts": 1, "desc": "Apostá 500.000 Pesos en total"},
+    {"id": "d_apuestas_10",       "tipo": "apuestas_count","meta": 10,        "xp": 60,   "pts": 1, "desc": "Hacé 10 apuestas (entre `!cf`, `!rt` y `!bj`)"},
+    {"id": "d_cf_5",              "tipo": "cf_count",     "meta": 5,          "xp": 40,   "pts": 1, "desc": "Jugá `!cf` 5 veces"},
+    {"id": "d_bj_3",              "tipo": "bj_count",     "meta": 3,          "xp": 50,   "pts": 1, "desc": "Jugá `!bj` 3 veces"},
+    {"id": "d_rt_3",              "tipo": "rt_count",     "meta": 3,          "xp": 40,   "pts": 1, "desc": "Jugá `!rt` 3 veces"},
+    # Gacha
+    {"id": "d_rw_claim_2",        "tipo": "rw_claim",     "meta": 2,          "xp": 60,   "pts": 1, "desc": "Reclamá 2 personajes en `!rw`"},
+    {"id": "d_rw_claim_3",        "tipo": "rw_claim",     "meta": 3,          "xp": 100,  "pts": 1, "desc": "Reclamá 3 personajes en `!rw`"},
+    {"id": "d_rw_count_2",        "tipo": "rw_count",     "meta": 2,          "xp": 50,   "pts": 1, "desc": "Tirá `!rw` 2 veces"},
+    # Tienda / items
+    {"id": "d_buy_5",             "tipo": "buy_count",    "meta": 5,          "xp": 40,   "pts": 1, "desc": "Comprá 5 items en la tienda"},
+    {"id": "d_buy_8",             "tipo": "buy_count",    "meta": 8,          "xp": 60,   "pts": 1, "desc": "Comprá 8 items en la tienda"},
+    {"id": "d_usar_5",            "tipo": "usar_count",   "meta": 5,          "xp": 50,   "pts": 1, "desc": "Usá 5 items de tu inventario"},
+    # Social
+    {"id": "d_pay_3",             "tipo": "pay_count",    "meta": 3,          "xp": 40,   "pts": 1, "desc": "Hacé 3 pagos con `!pay`"},
+    {"id": "d_dar_2",             "tipo": "dar_count",    "meta": 2,          "xp": 50,   "pts": 1, "desc": "Regalá items 2 veces con `!dar`"},
+    {"id": "d_robos_3",           "tipo": "robos_count",  "meta": 3,          "xp": 50,   "pts": 1, "desc": "Intentá robar 3 veces con `!robar`"},
+    # Mendigar
+    {"id": "d_mendigar_recv_50k", "tipo": "mendigar_recv","meta": 50_000,     "xp": 50,   "pts": 1, "desc": "Recibí 50.000 Pesos en `!mendigar`"},
+    {"id": "d_mendigar_count_2",  "tipo": "mendigar_count","meta": 2,         "xp": 40,   "pts": 1, "desc": "Usá `!mendigar` 2 veces"},
+]
+
+XP_BONUS_DIARIAS_COMPLETAS = 100
+PTS_BONUS_DIARIAS_COMPLETAS = 1
 
 def semana_iso_actual():
     return time.strftime("%G-W%V", time.gmtime())
@@ -1219,7 +1278,39 @@ def _buscar_mision_por_tipo(datos, tipo):
             return m
     return None
 
-async def procesar_evento_mision(usuario, tipo, cantidad, canal=None):
+def dia_iso_actual():
+    return time.strftime("%Y-%m-%d", time.gmtime())
+
+def generar_misiones_diarias():
+    elegidas = random.sample(MISIONES_DIARIAS_POOL, 3)
+    return [
+        {"id": m["id"], "tipo": m["tipo"], "meta": m["meta"], "progreso": 0, "completada": False}
+        for m in elegidas
+    ]
+
+def obtener_misiones_diarias_usuario(user_id):
+    global hubo_cambios_misiones_diarias_sin_guardar
+    user_id = str(user_id)
+    dia = dia_iso_actual()
+    datos = misiones_diarias_cache.get(user_id)
+    if not datos or datos.get("dia") != dia:
+        misiones_diarias_cache[user_id] = {
+            "nombre": datos.get("nombre", "") if datos else "",
+            "dia": dia,
+            "misiones": generar_misiones_diarias(),
+            "bonus_dado": False,
+        }
+        hubo_cambios_misiones_diarias_sin_guardar = True
+        datos = misiones_diarias_cache[user_id]
+    return datos
+
+def _buscar_mision_diaria_por_tipo(datos, tipo):
+    for m in datos["misiones"]:
+        if m["tipo"] == tipo and not m["completada"]:
+            return m
+    return None
+
+async def _procesar_mision_semanal(usuario, tipo, cantidad, canal=None):
     global hubo_cambios_misiones_sin_guardar, hubo_cambios_niveles_sin_guardar
     if cantidad <= 0:
         return
@@ -1247,7 +1338,7 @@ async def procesar_evento_mision(usuario, tipo, cantidad, canal=None):
         if canal is not None:
             try:
                 await canal.send(embed=crear_embed(
-                    titulo="✅ Misión completada",
+                    titulo="✅ Misión semanal completada",
                     descripcion=f"**{usuario.display_name}** completó: {texto_desc}\n+{xp_recompensa} XP · +{pts_recompensa} punto(s)",
                 ))
             except discord.HTTPException:
@@ -1268,20 +1359,98 @@ async def procesar_evento_mision(usuario, tipo, cantidad, canal=None):
             except discord.HTTPException:
                 pass
 
+async def procesar_evento_mision_diaria(usuario, tipo, cantidad, canal=None):
+    global hubo_cambios_misiones_diarias_sin_guardar, hubo_cambios_niveles_sin_guardar
+    if cantidad <= 0:
+        return
+    datos = obtener_misiones_diarias_usuario(usuario.id)
+    datos["nombre"] = usuario.display_name
+    m = _buscar_mision_diaria_por_tipo(datos, tipo)
+    if m is None:
+        return
+
+    m["progreso"] += cantidad
+    hubo_cambios_misiones_diarias_sin_guardar = True
+
+    if m["progreso"] >= m["meta"] and not m["completada"]:
+        m["completada"] = True
+        definicion = next((x for x in MISIONES_DIARIAS_POOL if x["id"] == m["id"]), None)
+        xp_recompensa = definicion["xp"] if definicion else 0
+        pts_recompensa = definicion["pts"] if definicion else 0
+        texto_desc = definicion["desc"] if definicion else m["id"]
+
+        dar_xp(usuario.id, xp_recompensa)
+        reg = _asegurar_registro_nivel(usuario.id, usuario.display_name)
+        reg["puntos"] += pts_recompensa
+        hubo_cambios_niveles_sin_guardar = True
+
+        if canal is not None:
+            try:
+                await canal.send(embed=crear_embed(
+                    titulo="✅ Misión diaria completada",
+                    descripcion=f"**{usuario.display_name}** completó: {texto_desc}\n+{xp_recompensa} XP · +{pts_recompensa} punto(s)",
+                ))
+            except discord.HTTPException:
+                pass
+
     if all(mm["completada"] for mm in datos["misiones"]) and not datos.get("bonus_dado"):
         datos["bonus_dado"] = True
-        dar_xp(usuario.id, XP_BONUS_MISIONES_COMPLETAS)
+        dar_xp(usuario.id, XP_BONUS_DIARIAS_COMPLETAS)
         reg = _asegurar_registro_nivel(usuario.id, usuario.display_name)
-        reg["puntos"] += PTS_BONUS_MISIONES_COMPLETAS
+        reg["puntos"] += PTS_BONUS_DIARIAS_COMPLETAS
         hubo_cambios_niveles_sin_guardar = True
         if canal is not None:
             try:
                 await canal.send(embed=crear_embed(
-                    titulo="🏆 ¡Misiones semanales completas!",
-                    descripcion=f"**{usuario.display_name}** completó las 3 misiones de la semana.\n+{XP_BONUS_MISIONES_COMPLETAS} XP · +{PTS_BONUS_MISIONES_COMPLETAS} puntos extra",
+                    titulo="🏆 ¡Misiones diarias completas!",
+                    descripcion=f"**{usuario.display_name}** completó las 3 misiones diarias.\n+{XP_BONUS_DIARIAS_COMPLETAS} XP · +{PTS_BONUS_DIARIAS_COMPLETAS} punto(s) extra",
                 ))
             except discord.HTTPException:
                 pass
+
+async def procesar_evento_mision(usuario, tipo, cantidad, canal=None):
+    await _procesar_mision_semanal(usuario, tipo, cantidad, canal)
+    await procesar_evento_mision_diaria(usuario, tipo, cantidad, canal)
+
+async def cargar_misiones_diarias_desde_github():
+    global misiones_diarias_cache, misiones_diarias_sha, misiones_diarias_cargados
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_ARCHIVO_MISIONES_DIARIAS}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status == 404:
+                misiones_diarias_cache, misiones_diarias_sha = {}, None
+            else:
+                resp.raise_for_status()
+                data = await resp.json()
+                misiones_diarias_cache = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+                misiones_diarias_sha = data["sha"]
+    misiones_diarias_cargados = True
+
+async def guardar_misiones_diarias_en_github():
+    global misiones_diarias_sha, hubo_cambios_misiones_diarias_sin_guardar
+    if not hubo_cambios_misiones_diarias_sin_guardar:
+        return False
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_ARCHIVO_MISIONES_DIARIAS}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp_get:
+            if resp_get.status == 200:
+                misiones_diarias_sha = (await resp_get.json())["sha"]
+            elif resp_get.status == 404:
+                misiones_diarias_sha = None
+            else:
+                resp_get.raise_for_status()
+        contenido_b64 = base64.b64encode(json.dumps(misiones_diarias_cache, indent=2, ensure_ascii=False).encode("utf-8")).decode("utf-8")
+        body = {"message": "Actualizar misiones diarias", "content": contenido_b64}
+        if misiones_diarias_sha:
+            body["sha"] = misiones_diarias_sha
+        async with session.put(url, headers=headers, json=body) as resp:
+            if resp.status not in (200, 201):
+                raise RuntimeError(f"{resp.status}: {await resp.text()}")
+            misiones_diarias_sha = (await resp.json())["content"]["sha"]
+    hubo_cambios_misiones_diarias_sin_guardar = False
+    return True
 
 async def cargar_niveles_desde_github():
     global niveles_cache, niveles_sha, niveles_cargados
@@ -1394,6 +1563,9 @@ async def guardado_periodico():
     guardado_misiones = await guardar_misiones_en_github()
     if guardado_misiones:
         print("📋 Misiones sincronizadas con GitHub (guardado periódico)")
+    guardado_misiones_dia = await guardar_misiones_diarias_en_github()
+    if guardado_misiones_dia:
+        print("🌙 Misiones diarias sincronizadas con GitHub (guardado periódico)")
 
 @tasks.loop(hours=4)
 async def actualizar_dolar():
@@ -1535,6 +1707,11 @@ async def on_ready():
     if not misiones_cargados and GITHUB_TOKEN and GITHUB_REPO:
         await cargar_misiones_desde_github()
         print(f"📋 Misiones cargadas desde GitHub ({len(misiones_cache)} usuarios)")
+
+    global misiones_diarias_cargados
+    if not misiones_diarias_cargados and GITHUB_TOKEN and GITHUB_REPO:
+        await cargar_misiones_diarias_desde_github()
+        print(f"🌙 Misiones diarias cargadas desde GitHub ({len(misiones_diarias_cache)} usuarios)")
 
     global dolar_cargado
     if not dolar_cargado and GITHUB_TOKEN and GITHUB_REPO:
@@ -2201,6 +2378,7 @@ async def pay(ctx, miembro: discord.Member = None, cantidad: str = None):
     ))
 
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["pay"], canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "pay_count", 1, canal=ctx.channel)
 
 @bot.command(name="givechar")
 async def givechar(ctx, *, texto: str = None):
@@ -2350,6 +2528,9 @@ async def vender_item_inventario(ctx, entrada):
         await guardar_balances_en_github()
     except Exception as e:
         print(f"⚠️ No pude guardar tras vender un ítem: {e}", flush=True)
+
+    if item["nombre"] == "Dólar":
+        await procesar_evento_mision(ctx.author, "dolar_vendido", cantidad, canal=ctx.channel)
 
     return True
 
@@ -2766,6 +2947,9 @@ async def robar(ctx, objetivo: discord.Member = None):
 
     await ctx.reply(embed=embed)
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["robar"], canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "robos_count", 1, canal=ctx.channel)
+    if roll < prob_exito and balance_objetivo > 0:
+        await procesar_evento_mision(ctx.author, "robos_exitosos", 1, canal=ctx.channel)
 
 MENSAJES_TRABAJO = [
     'Le vendiste un frasco con "aire de alta montaña" a un hippie en la calle y te lo compró sin dudarlo.',
@@ -2979,6 +3163,7 @@ async def mendigar(ctx):
     vista = MendigarView(ctx.author)
     vista.mensaje = await ctx.reply(embed=vista.construir_embed(), view=vista)
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["mendigar"], canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "mendigar_count", 1, canal=ctx.channel)
 
 @bot.command(name="dolar", aliases=["dólar", "usd"])
 async def dolar(ctx):
@@ -3073,6 +3258,8 @@ async def coinflip(ctx, opcion: str = None, cantidad: str = None):
 
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["cf"], canal=ctx.channel)
     await procesar_evento_mision(ctx.author, "bet_total", cantidad, canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "cf_count", 1, canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "apuestas_count", 1, canal=ctx.channel)
     if gano:
         await procesar_evento_mision(ctx.author, "bet_win", cantidad, canal=ctx.channel)
 
@@ -3135,6 +3322,8 @@ async def roulette(ctx, color: str = None, cantidad: str = None):
 
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["roulette"], canal=ctx.channel)
     await procesar_evento_mision(ctx.author, "bet_total", cantidad, canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "rt_count", 1, canal=ctx.channel)
+    await procesar_evento_mision(ctx.author, "apuestas_count", 1, canal=ctx.channel)
     if gano:
         await procesar_evento_mision(ctx.author, "bet_win", cantidad, canal=ctx.channel)
 
@@ -3260,6 +3449,8 @@ class BlackjackView(discord.ui.View):
         canal = interaction.channel
         asyncio.create_task(dar_xp_con_aviso(self.autor, XP_POR_COMANDO["blackjack"], canal=canal))
         asyncio.create_task(procesar_evento_mision(self.autor, "bet_total", self.apuesta, canal=canal))
+        asyncio.create_task(procesar_evento_mision(self.autor, "bj_count", 1, canal=canal))
+        asyncio.create_task(procesar_evento_mision(self.autor, "apuestas_count", 1, canal=canal))
         if resultado_tipo in ("gana", "blackjack"):
             asyncio.create_task(procesar_evento_mision(self.autor, "bet_win", self.apuesta, canal=canal))
 
@@ -3361,6 +3552,8 @@ async def blackjack(ctx, cantidad: str = None):
         await ctx.reply(embed=embed, view=view)
         await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["blackjack"], canal=ctx.channel)
         await procesar_evento_mision(ctx.author, "bet_total", cantidad, canal=ctx.channel)
+        await procesar_evento_mision(ctx.author, "bj_count", 1, canal=ctx.channel)
+        await procesar_evento_mision(ctx.author, "apuestas_count", 1, canal=ctx.channel)
         if resultado_tipo in ("gana", "blackjack"):
             await procesar_evento_mision(ctx.author, "bet_win", cantidad, canal=ctx.channel)
         return
@@ -3592,6 +3785,7 @@ async def rw(ctx):
 
     if exito:
         await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["rw"], canal=ctx.channel)
+        await procesar_evento_mision(ctx.author, "rw_count", 1, canal=ctx.channel)
         await ejecutar_autouse_silencioso(ctx.author, "despues_de_rw")
 
 @bot.command(name="rwAdmin", aliases=["rwadmin"], hidden=True)
@@ -4546,6 +4740,8 @@ async def buy(ctx, *, entrada: str = None):
 
     await dar_xp_con_aviso(ctx.author, XP_POR_COMANDO["buy"], canal=ctx.channel)
     await procesar_evento_mision(ctx.author, "buy_count", cantidad, canal=ctx.channel)
+    if item["nombre"] == "Dólar":
+        await procesar_evento_mision(ctx.author, "dolar_comprado", cantidad, canal=ctx.channel)
 
 ITEMS_POR_PAGINA = 10
 
@@ -4962,6 +5158,8 @@ async def usar(ctx, *, nombre_buscado: str = None):
     except Exception as e:
         print(f"⚠️ No pude guardar el inventario: {e}", flush=True)
 
+    await procesar_evento_mision(ctx.author, "usar_count", 1, canal=ctx.channel)
+
 @bot.command(name="autouse")
 async def autouse(ctx, *, nombre_buscado: str = None):
     """Configura que un item se use solo en su momento (!autouse nombre del item).
@@ -5227,36 +5425,82 @@ class PerksView(discord.ui.View):
         except discord.HTTPException:
             pass
 
+def _barra_progreso(actual, total, largo=12):
+    if total <= 0:
+        return "▱" * largo
+    actual = max(0, min(actual, total))
+    llenos = int(round((actual / total) * largo))
+    llenos = max(0, min(llenos, largo))
+    return "▰" * llenos + "▱" * (largo - llenos)
+
+def construir_embed_nivel(usuario):
+    user_id = str(usuario.id)
+    datos = niveles_cache.get(user_id)
+    if not datos:
+        return crear_embed(descripcion=f"**{usuario.display_name}** todavía no tiene progreso. Hablá un poco o usá comandos para arrancar.")
+    nivel = datos.get("nivel", 1)
+    xp = datos.get("xp", 0)
+    xp_req = xp_necesario_para_nivel(nivel)
+    puntos = datos.get("puntos", 0)
+    perks = datos.get("perks", {})
+    barra = _barra_progreso(xp, xp_req)
+    pct = int((xp / xp_req) * 100) if xp_req else 0
+
+    perks_activos = []
+    for clave, d in PERKS_DEFINICION.items():
+        n = perks.get(clave, 0)
+        if n > 0:
+            perks_activos.append(f"> {d['emoji']} **{d['nombre']}** — nivel {n}/{d['max_nivel']}")
+    if not perks_activos:
+        perks_activos = ["-# Todavía no compraste ningún perk."]
+
+    descripcion = (
+        f"### ✨ Nivel {nivel}\n"
+        f"{SEPARADOR}\n\n"
+        f"> 🧪 **XP**\n"
+        f"> {barra}  {formatear_numero(xp)} / {formatear_numero(xp_req)}  ({pct}%)\n\n"
+        f"> 🎯 **Puntos disponibles**\n"
+        f"> **{puntos}**\n\n"
+        f"> 🏅 **Perks activos**\n"
+        + "\n".join(perks_activos)
+    )
+    return crear_embed(descripcion=descripcion, footer=f"Usá !perks para gastar tus puntos · {usuario.display_name}")
+
 def construir_embed_perks(usuario):
     user_id = str(usuario.id)
     datos = niveles_cache.get(user_id, {})
     nivel = datos.get("nivel", 1)
     puntos = datos.get("puntos", 0)
     xp = datos.get("xp", 0)
-    xp_necesario = xp_necesario_para_nivel(nivel)
+    xp_req = xp_necesario_para_nivel(nivel)
     perks = datos.get("perks", {})
 
     lineas = [
-        f"### 📚 Nivel {nivel}",
-        f"> XP: **{formatear_numero(xp)}/{formatear_numero(xp_necesario)}**",
-        f"> Puntos disponibles: **{puntos}**",
+        f"### 🎯 Perks",
+        f"{SEPARADOR}\n",
+        f"> ✨ **Nivel {nivel}**  ·  **{puntos}** punto(s) disponibles",
+        f"> 🧪 XP: **{formatear_numero(xp)} / {formatear_numero(xp_req)}**",
         "",
-        "### 🎯 Perks",
+        f"### 🏅 Catálogo",
     ]
     for clave, d in PERKS_DEFINICION.items():
         nivel_p = perks.get(clave, 0)
-        lineas.append(f"> {d['emoji']} **{d['nombre']}** (niv {nivel_p}/{d['max_nivel']}) — {d['descripcion']}")
-    return crear_embed(titulo=f"✨ Progreso de {usuario.display_name}", descripcion="\n".join(lineas))
+        if nivel_p >= d["max_nivel"]:
+            linea_costo = "-# 🔒 Al máximo"
+        else:
+            linea_costo = f"-# Costo siguiente: **{d['costos'][nivel_p]}** pts"
+        lineas.append(
+            f"> {d['emoji']} **{d['nombre']}**  ·  nivel {nivel_p}/{d['max_nivel']}\n"
+            f"> {d['descripcion']}\n"
+            f"> {linea_costo}"
+        )
+    return crear_embed(descripcion="\n\n".join(lineas), footer=f"Tocá un botón para subir de nivel un perk · {usuario.display_name}")
 
 @bot.command(name="nivel", aliases=["lvl", "level"])
 async def nivel_cmd(ctx, miembro: discord.Member = None):
-    """Muestra tu nivel, XP, puntos y perks"""
+    """Muestra tu nivel, XP, puntos y perks activos"""
     objetivo = miembro or ctx.author
-    datos = niveles_cache.get(str(objetivo.id))
-    if not datos:
-        await ctx.reply(embed=crear_embed(descripcion=f"**{objetivo.display_name}** todavía no tiene progreso. Hablá un poco o usá comandos para arrancar."))
-        return
-    await ctx.reply(embed=construir_embed_perks(objetivo))
+    await ctx.reply(embed=construir_embed_nivel(objetivo))
 
 @bot.command(name="perks")
 async def perks_cmd(ctx):
@@ -5266,32 +5510,79 @@ async def perks_cmd(ctx):
     vista = PerksView(ctx.author)
     vista.mensaje = await ctx.reply(embed=construir_embed_perks(ctx.author), view=vista)
 
-@bot.command(name="misiones", aliases=["mision", "quests", "quest"])
-async def misiones_cmd(ctx, miembro: discord.Member = None):
-    """Muestra tus misiones semanales y el progreso"""
-    objetivo = miembro or ctx.author
-    datos = obtener_misiones_usuario(objetivo.id)
-    datos["nombre"] = objetivo.display_name
-
-    lineas = [f"### 📅 Semana {datos['semana']}"]
-    for m in datos["misiones"]:
-        definicion = next((x for x in MISIONES_POOL if x["id"] == m["id"]), None)
+def _formatear_lista_misiones(misiones, pool, bonus_dado, xp_bonus, pts_bonus, etiqueta_bonus):
+    lineas = []
+    for m in misiones:
+        definicion = next((x for x in pool if x["id"] == m["id"]), None)
         desc = definicion["desc"] if definicion else m["id"]
         progreso = m["progreso"]
         meta = m["meta"]
         if meta >= 1000:
-            prog_txt = f"{formatear_numero(min(progreso, meta))}/{formatear_numero(meta)}"
+            prog_txt = f"{formatear_numero(min(progreso, meta))} / {formatear_numero(meta)}"
         else:
-            prog_txt = f"{min(progreso, meta)}/{meta}"
+            prog_txt = f"{min(progreso, meta)} / {meta}"
+        barra = _barra_progreso(progreso, meta, largo=10)
         check = "✅" if m["completada"] else "⏳"
-        recompensa = f"+{definicion['xp']} XP, +{definicion['pts']} pt" if definicion else ""
-        lineas.append(f"> {check} {desc}\n> └ {prog_txt} · {recompensa}")
+        recompensa = f"+{definicion['xp']} XP · +{definicion['pts']} pt" if definicion else ""
+        lineas.append(
+            f"> {check} **{desc}**\n"
+            f"> {barra}  {prog_txt}\n"
+            f"> {recompensa}"
+        )
+    if bonus_dado:
+        lineas.append(f"-# 🏆 {etiqueta_bonus} +{xp_bonus} XP · +{pts_bonus} pts extra.")
+    return lineas
 
-    if datos.get("bonus_dado"):
-        lineas.append("")
-        lineas.append(f"-# 🏆 Completaste las 3 esta semana. +{XP_BONUS_MISIONES_COMPLETAS} XP y +{PTS_BONUS_MISIONES_COMPLETAS} pts extra.")
+def construir_embed_misiones(objetivo):
+    datos_sem = obtener_misiones_usuario(objetivo.id)
+    datos_sem["nombre"] = objetivo.display_name
+    datos_dia = obtener_misiones_diarias_usuario(objetivo.id)
+    datos_dia["nombre"] = objetivo.display_name
 
-    await ctx.reply(embed=crear_embed(titulo=f"📋 Misiones de {objetivo.display_name}", descripcion="\n".join(lineas)))
+    lineas = [
+        f"### 📅 Semanales",
+        f"-# Semana {datos_sem['semana']}",
+        f"{SEPARADOR}\n",
+    ]
+    lineas.extend(_formatear_lista_misiones(
+        datos_sem["misiones"], MISIONES_POOL, datos_sem.get("bonus_dado"),
+        XP_BONUS_MISIONES_COMPLETAS, PTS_BONUS_MISIONES_COMPLETAS,
+        "Completaste las 3 esta semana.",
+    ))
+    lineas.append("")
+    lineas.append(f"### 🌙 Diarias")
+    lineas.append(f"-# Día {datos_dia['dia']}")
+    lineas.append(f"{SEPARADOR}\n")
+    lineas.extend(_formatear_lista_misiones(
+        datos_dia["misiones"], MISIONES_DIARIAS_POOL, datos_dia.get("bonus_dado"),
+        XP_BONUS_DIARIAS_COMPLETAS, PTS_BONUS_DIARIAS_COMPLETAS,
+        "Completaste las 3 hoy.",
+    ))
+    return crear_embed(descripcion="\n\n".join(lineas), footer=f"Misiones de {objetivo.display_name}")
+
+@bot.command(name="misiones", aliases=["mision", "quests", "quest"])
+async def misiones_cmd(ctx, miembro: discord.Member = None):
+    """Muestra tus misiones semanales y diarias con el progreso"""
+    objetivo = miembro or ctx.author
+    await ctx.reply(embed=construir_embed_misiones(objetivo))
+
+@bot.command(name="diarias", aliases=["daily", "dailies"])
+async def diarias_cmd(ctx, miembro: discord.Member = None):
+    """Muestra solo tus misiones diarias"""
+    objetivo = miembro or ctx.author
+    datos = obtener_misiones_diarias_usuario(objetivo.id)
+    datos["nombre"] = objetivo.display_name
+    lineas = [
+        f"### 🌙 Diarias",
+        f"-# Día {datos['dia']}",
+        f"{SEPARADOR}\n",
+    ]
+    lineas.extend(_formatear_lista_misiones(
+        datos["misiones"], MISIONES_DIARIAS_POOL, datos.get("bonus_dado"),
+        XP_BONUS_DIARIAS_COMPLETAS, PTS_BONUS_DIARIAS_COMPLETAS,
+        "Completaste las 3 hoy.",
+    ))
+    await ctx.reply(embed=crear_embed(descripcion="\n\n".join(lineas), footer=f"Misiones diarias de {objetivo.display_name}"))
 
 @bot.command(name="dar", aliases=["regalar"])
 async def dar_cmd(ctx, miembro: discord.Member = None, *, entrada: str = None):
@@ -5369,6 +5660,8 @@ async def dar_cmd(ctx, miembro: discord.Member = None, *, entrada: str = None):
     except Exception as e:
         print(f"⚠️ No pude guardar tras !dar: {e}", flush=True)
 
+    await procesar_evento_mision(ctx.author, "dar_count", 1, canal=ctx.channel)
+
 # ===================== FIN COMANDOS DE NIVELES =====================
 
 # ===================== HELP =====================
@@ -5440,7 +5733,8 @@ CATEGORIAS_HELP = [
         [
             "`!nivel [@alguien]` · también `!lvl` / `!level`\nVes tu nivel, XP, puntos y perks.\nEjemplo: `!nivel`",
             "`!perks`\nPanel para comprar o subir perks con tus puntos.\nEjemplo: `!perks`",
-            "`!misiones [@alguien]` · también `!mision` / `!quests`\nTus 3 misiones semanales y el progreso.\nEjemplo: `!misiones`",
+            "`!misiones [@alguien]` · también `!mision` / `!quests`\nTus misiones semanales y diarias con el progreso.\nEjemplo: `!misiones`",
+            "`!diarias [@alguien]` · también `!daily` / `!dailies`\nSolo tus misiones diarias.\nEjemplo: `!diarias`",
             "`!dar @usuario item [cantidad]`\nLe das items de tu inventario a otro usuario. Para plata es `!pay`, para personajes es `!givechar`.\nEjemplo: `!dar @Usuario Café doble 3`",
             "-# Ganás XP por escribir mensajes (con cooldown de 15s) y por usar comandos. Cada nivel te da 2 puntos de perk.",
         ],
@@ -5689,7 +5983,8 @@ async def datasave(ctx):
         guardado_dolar = await guardar_dolar_en_github()
         guardado_niveles = await guardar_niveles_en_github()
         guardado_misiones = await guardar_misiones_en_github()
-        if guardado_balances or guardado_characters or guardado_personajes or guardado_inventario or guardado_matrimonios or guardado_memoria or guardado_dolar or guardado_niveles or guardado_misiones:
+        guardado_misiones_dia = await guardar_misiones_diarias_en_github()
+        if guardado_balances or guardado_characters or guardado_personajes or guardado_inventario or guardado_matrimonios or guardado_memoria or guardado_dolar or guardado_niveles or guardado_misiones or guardado_misiones_dia:
             await aviso.edit(embed=crear_embed(descripcion="💾 Listo, quedó todo guardado en GitHub. Podés estar tranquilo/a."))
         else:
             await aviso.edit(embed=crear_embed(descripcion="No había cambios nuevos desde el último guardado, así que no hizo falta tocar nada."))
