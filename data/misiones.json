@@ -8,21 +8,21 @@
         "tipo": "buy_count",
         "meta": 20,
         "progreso": 20,
-        "completada": true
+        "completada": false
       },
       {
         "id": "bet_win_500k",
         "tipo": "bet_win",
         "meta": 500000,
         "progreso": 500000,
-        "completada": true
+        "completada": false
       },
       {
         "id": "bet_total_5m",
         "tipo": "bet_total",
         "meta": 5000000,
         "progreso": 5000000,
-        "completada": true
+        "completada": false
       }
     ],
     "bonus_dado": true
