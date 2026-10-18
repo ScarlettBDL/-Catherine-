@@ -2551,6 +2551,12 @@
         "Imagen": "https://static.wikia.nocookie.net/onepiece/images/3/3d/Koala_Anime_Infobox.png/revision/latest/scale-to-width-down/1200?cb=20140928211728",
         "Fuente": "One Piece",
         "Valor": 20000
+      },
+      {
+        "Nombre": "Kamuri Sengoku",
+        "Imagen": "https://i1.sndcdn.com/artworks-000361167327-tt3dvq-t500x500.jpg",
+        "Fuente": "Slow Start",
+        "Valor": 20000
       }
     ]
   }
