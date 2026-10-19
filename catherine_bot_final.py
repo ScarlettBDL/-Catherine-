@@ -136,6 +136,15 @@ def formatear_pesos(numero):
     """1500000 -> '1.500.000 Pesos'. Toda la plata del bot se muestra así."""
     return f"{formatear_numero(numero)} Pesos"
 
+# Emoji propio del bot (subido en la app, funciona en cualquier servidor por su ID). Se usa SOLO en los mensajes de
+# transacciones (ganaste / perdiste / pagaste / guardaste...), no en balances, tienda ni rankings.
+# Si algún día no se ve (emoji borrado, etc.) se puede cambiar por "Pesos" para volver al texto de siempre.
+EMOJI_PESOS = "<:Pesos:1561804906472677406>"
+
+def formatear_pesos_tx(numero):
+    """1500000 -> '1.500.000 <emoji>'. Para el monto que se ganó/perdió/movió en una transacción."""
+    return f"{formatear_numero(numero)} {EMOJI_PESOS}"
+
 def formatear_tiempo_restante(segundos):
     """1h 30m / 45m / 12s, para mensajes de cooldown."""
     segundos = max(int(segundos), 0)
@@ -311,6 +320,18 @@ personajes_sha = None
 personajes_cargados = False
 hubo_cambios_personajes_sin_guardar = False
 
+async def contenido_desde_github(session, url, headers, data):
+    """Devuelve el texto de un archivo del repo a partir de la respuesta de la API de contenidos.
+    La API solo incluye `content` (base64) hasta 1 MB; en archivos más grandes viene vacío.
+    En ese caso se vuelve a pedir el mismo endpoint con Accept raw (soporta hasta 100 MB)."""
+    contenido_b64 = data.get("content")
+    if contenido_b64 and data.get("encoding") == "base64":
+        return base64.b64decode(contenido_b64).decode("utf-8")
+    headers_raw = {**headers, "Accept": "application/vnd.github.raw+json"}
+    async with session.get(url, headers=headers_raw) as resp_raw:
+        resp_raw.raise_for_status()
+        return await resp_raw.text(encoding="utf-8")
+
 def campo_personaje(personaje, *claves, default="???"):
     for clave in claves:
         if clave in personaje and personaje[clave] not in (None, ""):
@@ -331,16 +352,7 @@ async def cargar_personajes_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido_b64 = data.get("content")
-                if contenido_b64 and data.get("encoding") == "base64":
-                    contenido = base64.b64decode(contenido_b64).decode("utf-8")
-                else:
-                    # Archivos > 1 MB: la API de contenidos devuelve content vacío.
-                    # Se pide el mismo endpoint con Accept raw (soporta hasta 100 MB).
-                    headers_raw = {**headers, "Accept": "application/vnd.github.raw+json"}
-                    async with session.get(url, headers=headers_raw) as resp_raw:
-                        resp_raw.raise_for_status()
-                        contenido = await resp_raw.text(encoding="utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 bruto = json.loads(contenido)
                 if isinstance(bruto, list):
                     personajes_cache = bruto
@@ -403,7 +415,7 @@ async def cargar_matrimonios_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 matrimonios_cache = json.loads(contenido)
                 matrimonios_sha = data["sha"]
     matrimonios_cargados = True
@@ -500,7 +512,7 @@ async def cargar_memoria_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 memoria_cache = json.loads(contenido)
                 memoria_sha = data["sha"]
     memoria_cargada = True
@@ -617,7 +629,7 @@ async def cargar_dolar_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 datos = json.loads(contenido)
                 dolar_valor = datos.get("valor", DOLAR_VALOR_INICIAL)
                 dolar_canal_anuncios = datos.get("canal_anuncios")
@@ -687,7 +699,7 @@ async def cargar_characters_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 characters_cache = json.loads(contenido)
                 characters_sha = data["sha"]
     characters_cargados = True
@@ -769,7 +781,7 @@ async def cargar_shop_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 shop_cache = json.loads(contenido)
                 shop_sha = data["sha"]
     shop_cargado = True
@@ -846,7 +858,7 @@ async def cargar_inventario_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 inventario_cache = json.loads(contenido)
                 inventario_sha = data["sha"]
     inventario_cargado = True
@@ -1025,7 +1037,7 @@ async def cargar_balances_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido = await contenido_desde_github(session, url, headers, data)
                 balances_cache = json.loads(contenido)
                 balances_sha = data["sha"]
     balances_cargados = True
@@ -1432,7 +1444,7 @@ async def cargar_misiones_diarias_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                misiones_diarias_cache = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+                misiones_diarias_cache = json.loads(await contenido_desde_github(session, url, headers, data))
                 misiones_diarias_sha = data["sha"]
     misiones_diarias_cargados = True
 
@@ -1472,7 +1484,7 @@ async def cargar_niveles_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                niveles_cache = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+                niveles_cache = json.loads(await contenido_desde_github(session, url, headers, data))
                 niveles_sha = data["sha"]
     niveles_cargados = True
 
@@ -1512,7 +1524,7 @@ async def cargar_misiones_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                misiones_cache = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+                misiones_cache = json.loads(await contenido_desde_github(session, url, headers, data))
                 misiones_sha = data["sha"]
     misiones_cargados = True
 
@@ -2208,7 +2220,7 @@ async def depositar(ctx, cantidad: str = None):
     await ctx.reply(embed=crear_embed(
         titulo="🏦 Depositado",
         descripcion=(
-            f"Guardaste **{formatear_pesos(cantidad)}** en el banco.\n"
+            f"Guardaste **{formatear_pesos_tx(cantidad)}** en el banco.\n"
             f"Balance: **{formatear_pesos(balances_cache[user_id]['balance'])}** — "
             f"Banco: **{formatear_pesos(balances_cache[user_id]['banco'])}**"
         ),
@@ -2249,7 +2261,7 @@ async def retirar(ctx, cantidad: str = None):
     await ctx.reply(embed=crear_embed(
         titulo="🏦 Retirado",
         descripcion=(
-            f"Sacaste **{formatear_pesos(cantidad)}** del banco.\n"
+            f"Sacaste **{formatear_pesos_tx(cantidad)}** del banco.\n"
             f"Balance: **{formatear_pesos(balances_cache[user_id]['balance'])}** — "
             f"Banco: **{formatear_pesos(balances_cache[user_id]['banco'])}**"
         ),
@@ -2289,7 +2301,7 @@ async def depositarcaja(ctx, cantidad: str = None):
     await ctx.reply(embed=crear_embed(
         titulo="🔒 Guardado en la Caja de ahorros",
         descripcion=(
-            f"Guardaste **{formatear_pesos(cantidad)}** en tu Caja de ahorros.\n"
+            f"Guardaste **{formatear_pesos_tx(cantidad)}** en tu Caja de ahorros.\n"
             f"Balance: **{formatear_pesos(balances_cache[user_id]['balance'])}** — "
             f"Caja: **{formatear_pesos(balances_cache[user_id]['caja'])}**"
         ),
@@ -2328,7 +2340,7 @@ async def retirarcaja(ctx, cantidad: str = None):
     await ctx.reply(embed=crear_embed(
         titulo="🔓 Retirado de la Caja de ahorros",
         descripcion=(
-            f"Sacaste **{formatear_pesos(cantidad)}** de tu Caja de ahorros.\n"
+            f"Sacaste **{formatear_pesos_tx(cantidad)}** de tu Caja de ahorros.\n"
             f"Balance: **{formatear_pesos(balances_cache[user_id]['balance'])}** — "
             f"Caja: **{formatear_pesos(balances_cache[user_id]['caja'])}**"
         ),
@@ -2381,7 +2393,7 @@ async def pay(ctx, miembro: discord.Member = None, cantidad: str = None):
     await ctx.reply(embed=crear_embed(
         titulo="💸 Pago enviado",
         descripcion=(
-            f"Le pagaste **{formatear_pesos(cantidad)}** a **{miembro.display_name}**.\n"
+            f"Le pagaste **{formatear_pesos_tx(cantidad)}** a **{miembro.display_name}**.\n"
             f"Tu balance actual: **{formatear_pesos(balances_cache[emisor_id]['balance'])}**"
         ),
     ))
@@ -2525,7 +2537,7 @@ async def vender_item_inventario(ctx, entrada):
         descripcion=(
             f"Vendiste **{cantidad}x {item['nombre']}** a {formatear_pesos(precio_unitario)} c/u.\n\n"
             f"> 💵 Bruto: **{formatear_pesos(bruto)}**\n"
-            f"> 📈 Te dieron ({int((1 - COMISION_VENTA_DOLAR) * 100)}%): **{formatear_pesos(ganancia)}**\n"
+            f"> 📈 Te dieron ({int((1 - COMISION_VENTA_DOLAR) * 100)}%): **{formatear_pesos_tx(ganancia)}**\n"
             f"> 🏦 Comisión ({int(COMISION_VENTA_DOLAR * 100)}%): **{formatear_pesos(comision)}**\n\n"
             f"Balance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
         ),
@@ -2608,7 +2620,7 @@ async def vender(ctx, *, nombre_buscado: str = None):
         descripcion=(
             f"Vendiste a **{nombre_personaje}**.\n\n"
             f"> 💵 Valor original: **{formatear_pesos(valor_original)}**\n"
-            f"> 📈 Te dieron ({int(PORCENTAJE_VENTA*100)}%): **{formatear_pesos(ganancia)}**\n"
+            f"> 📈 Te dieron ({int(PORCENTAJE_VENTA*100)}%): **{formatear_pesos_tx(ganancia)}**\n"
             f"> 🏦 Comisión de la banca ({int((1-PORCENTAJE_VENTA)*100)}%): **{formatear_pesos(comision_banca)}**\n\n"
             f"Balance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
         ),
@@ -2835,11 +2847,11 @@ async def divorcio(ctx):
     eliminar_matrimonio(user_id)
 
     if pareja_es_bot:
-        detalle = f"Te divorciaste de **†Catherine†**. Te costó **{formatear_pesos(costo_usuario)}** (los dos lados, porque ella no tiene cuenta)."
+        detalle = f"Te divorciaste de **†Catherine†**. Te costó **{formatear_pesos_tx(costo_usuario)}** (los dos lados, porque ella no tiene cuenta)."
     else:
         detalle = (
             f"Te divorciaste de **{pareja_nombre}**.\n"
-            f"Cada uno pagó **{formatear_pesos(COSTO_DIVORCIO_POR_PERSONA)}**."
+            f"Cada uno pagó **{formatear_pesos_tx(COSTO_DIVORCIO_POR_PERSONA)}**."
         )
 
     embed = crear_embed(
@@ -2932,7 +2944,7 @@ async def robar(ctx, objetivo: discord.Member = None):
             embed = crear_embed(
                 titulo="🥷 Robo exitoso",
                 descripcion=(
-                    f"Le afanaste **{formatear_pesos(balance_objetivo)}** a **{objetivo.display_name}**.\n"
+                    f"Le afanaste **{formatear_pesos_tx(balance_objetivo)}** a **{objetivo.display_name}**.\n"
                     f"Tu balance actual: **{formatear_pesos(balances_cache[ladron_id]['balance'])}**"
                 ),
             )
@@ -2944,7 +2956,7 @@ async def robar(ctx, objetivo: discord.Member = None):
         embed = crear_embed(
             titulo="🚨 Te agarraron",
             descripcion=(
-                f"Te descubrieron intentando robarle a **{objetivo.display_name}** y perdiste **{formatear_pesos(perdida)}** vos.\n"
+                f"Te descubrieron intentando robarle a **{objetivo.display_name}** y perdiste **{formatear_pesos_tx(perdida)}** vos.\n"
                 f"Tu balance actual: **{formatear_pesos(balances_cache[ladron_id]['balance'])}**"
             ),
         )
@@ -3011,7 +3023,7 @@ async def ejecutar_w(ctx):
         titulo="💼 A trabajar",
         descripcion=(
             f"{mensaje}\n"
-            f"**+{formatear_pesos(ganancia)}**{texto_buff}{texto_critico}\n\n"
+            f"**+{formatear_pesos_tx(ganancia)}**{texto_buff}{texto_critico}\n\n"
             f"Balance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
         ),
     )
@@ -3090,7 +3102,7 @@ class DonarModal(discord.ui.Modal):
 
         await interaction.response.edit_message(embed=self.vista.construir_embed(), view=self.vista)
         await interaction.followup.send(
-            f"Donaste **{formatear_pesos(cantidad)}** a **{self.vista.mendigo.display_name}**.", ephemeral=True
+            f"Donaste **{formatear_pesos_tx(cantidad)}** a **{self.vista.mendigo.display_name}**.", ephemeral=True
         )
 
 class MendigarView(discord.ui.View):
@@ -3256,11 +3268,11 @@ async def coinflip(ctx, opcion: str = None, cantidad: str = None):
 
     if gano:
         balances_cache[user_id]["balance"] += cantidad
-        descripcion = f"Salió **{resultado}**. Ganaste **{formatear_pesos(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
+        descripcion = f"Salió **{resultado}**. Ganaste **{formatear_pesos_tx(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
     else:
         balances_cache[user_id]["balance"] -= cantidad
         sumar_a_banca(cantidad)
-        descripcion = f"Salió **{resultado}**. Perdiste **{formatear_pesos(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
+        descripcion = f"Salió **{resultado}**. Perdiste **{formatear_pesos_tx(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
 
     hubo_cambios_sin_guardar = True
     await ctx.reply(embed=crear_embed(titulo="🪙 Coinflip", descripcion=descripcion))
@@ -3320,11 +3332,11 @@ async def roulette(ctx, color: str = None, cantidad: str = None):
 
     if gano:
         balances_cache[user_id]["balance"] += cantidad
-        descripcion = f"Salió {emoji_resultado} **{resultado}**. Ganaste **{formatear_pesos(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
+        descripcion = f"Salió {emoji_resultado} **{resultado}**. Ganaste **{formatear_pesos_tx(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
     else:
         balances_cache[user_id]["balance"] -= cantidad
         sumar_a_banca(cantidad)
-        descripcion = f"Salió {emoji_resultado} **{resultado}**. Perdiste **{formatear_pesos(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
+        descripcion = f"Salió {emoji_resultado} **{resultado}**. Perdiste **{formatear_pesos_tx(cantidad)}**.\nBalance actual: **{formatear_pesos(balances_cache[user_id]['balance'])}**"
 
     hubo_cambios_sin_guardar = True
     await ctx.reply(embed=crear_embed(titulo="🎡 Ruleta", descripcion=descripcion))
@@ -3356,7 +3368,7 @@ async def addmoney(ctx, miembro: discord.Member = None, cantidad: int = None):
     balances_cache[user_id]["balance"] += cantidad
     hubo_cambios_sin_guardar = True
 
-    embed = crear_embed(descripcion=f"Le di **{formatear_pesos(cantidad)}** a **{miembro.display_name}**.\nBalance nuevo: **{formatear_pesos(balances_cache[user_id]['balance'])}**")
+    embed = crear_embed(descripcion=f"Le di **{formatear_pesos_tx(cantidad)}** a **{miembro.display_name}**.\nBalance nuevo: **{formatear_pesos(balances_cache[user_id]['balance'])}**")
     await ctx.reply(embed=embed)
 
 PALOS = ["♠", "♥", "♦", "♣"]
@@ -3433,15 +3445,15 @@ class BlackjackView(discord.ui.View):
 
         if resultado_tipo == "gana":
             balances_cache[user_id]["balance"] += self.apuesta
-            texto = f"Ganaste **{formatear_pesos(self.apuesta)}**."
+            texto = f"Ganaste **{formatear_pesos_tx(self.apuesta)}**."
         elif resultado_tipo == "blackjack":
             ganancia = int(self.apuesta * 1.5)
             balances_cache[user_id]["balance"] += ganancia
-            texto = f"¡Blackjack! Ganaste **{formatear_pesos(ganancia)}**."
+            texto = f"¡Blackjack! Ganaste **{formatear_pesos_tx(ganancia)}**."
         elif resultado_tipo == "pierde":
             balances_cache[user_id]["balance"] -= self.apuesta
             sumar_a_banca(self.apuesta)
-            texto = f"Perdiste **{formatear_pesos(self.apuesta)}**."
+            texto = f"Perdiste **{formatear_pesos_tx(self.apuesta)}**."
         else:
             texto = "Empate, recuperás tu apuesta."
 
@@ -3605,11 +3617,18 @@ def indice_rareza(valor):
             return peso, nombre, i
     return RANGOS_RAREZA[0][2], RANGOS_RAREZA[0][3], 0
 
-def agrupar_personajes_por_rareza():
-    """Agrupa personajes_cache según a qué rango de RANGOS_RAREZA pertenece cada uno.
+def personajes_por_genero(genero=None):
+    """Personajes de personajes_cache filtrados por el campo (oculto) "Genero": "F" o "M".
+    genero=None -> todos (tirada general). Los que no tienen Genero cargado solo salen en la tirada general."""
+    if not genero:
+        return personajes_cache
+    return [p for p in personajes_cache if str(campo_personaje(p, "Genero", "genero", default="")).upper() == genero]
+
+def agrupar_personajes_por_rareza(genero=None):
+    """Agrupa personajes_cache (o solo los de un género) según a qué rango de RANGOS_RAREZA pertenece cada uno.
     Devuelve una lista paralela a RANGOS_RAREZA: grupos[i] = lista de personajes en ese rango."""
     grupos = [[] for _ in RANGOS_RAREZA]
-    for p in personajes_cache:
+    for p in personajes_por_genero(genero):
         _, _, i = indice_rareza(campo_personaje(p, "Valor", "valor"))
         grupos[i].append(p)
     return grupos
@@ -3707,8 +3726,8 @@ class RWClaimView(discord.ui.View):
         except discord.HTTPException:
             pass
 
-async def ejecutar_rw(ctx, admin=False):
-    """Devuelve True si se hizo la tirada, False si no."""
+async def ejecutar_rw(ctx, admin=False, genero=None):
+    """Devuelve True si se hizo la tirada, False si no. genero: None (general), "F" (waifus) o "M" (husbandos)."""
     if not personajes_cache:
         await ctx.reply(embed=crear_embed(
             descripcion="No hay personajes cargados todavía. Subí el `rw.json` al repo y corré `!rwreload`."
@@ -3716,13 +3735,13 @@ async def ejecutar_rw(ctx, admin=False):
         return False
 
     # 1) Agrupamos los personajes por rango de rareza
-    grupos = agrupar_personajes_por_rareza()
+    grupos = agrupar_personajes_por_rareza(genero)
 
     # 2) Sorteamos la RAREZA (no el personaje) según el % de la tabla.
     #    Solo entran en el sorteo los rangos que tengan al menos 1 personaje cargado.
     indices_disponibles = [i for i, grupo in enumerate(grupos) if grupo]
     if not indices_disponibles:
-        await ctx.reply(embed=crear_embed(descripcion="No hay personajes con un valor válido cargado."))
+        await ctx.reply(embed=crear_embed(descripcion="No hay personajes de ese tipo cargados todavía." if genero else "No hay personajes con un valor válido cargado."))
         return False
     pesos_disponibles = [RANGOS_RAREZA[i][2] for i in indices_disponibles]
 
@@ -3765,9 +3784,8 @@ async def ejecutar_rw(ctx, admin=False):
     view.mensaje = mensaje
     return True
 
-@bot.command(name="rw")
-async def rw(ctx):
-    """Sacá un personaje random del rw.json (los de más valor son más difíciles de sacar)"""
+async def tirar_rw(ctx, genero=None):
+    """Lógica común de !rw (general), !rf (waifus) y !rm (husbandos): mismo cooldown, mismo XP y mismas misiones."""
     user_id = str(ctx.author.id)
     restante = cooldown_restante(cooldown_rw_usuario, user_id)
 
@@ -3786,7 +3804,7 @@ async def rw(ctx):
             ))
             return
 
-    exito = await ejecutar_rw(ctx)
+    exito = await ejecutar_rw(ctx, genero=genero)
 
     # Solo ponemos cooldown nuevo si la tirada se hizo Y no usamos cristal
     if exito and not usando_cristal:
@@ -3797,13 +3815,29 @@ async def rw(ctx):
         await procesar_evento_mision(ctx.author, "rw_count", 1, canal=ctx.channel)
         await ejecutar_autouse_silencioso(ctx.author, "despues_de_rw")
 
+@bot.command(name="rw")
+async def rw(ctx):
+    """Sacá un personaje random del rw.json, de cualquier tipo (los de más valor son más difíciles de sacar)"""
+    await tirar_rw(ctx)
+
+@bot.command(name="rf", aliases=["waifu"])
+async def rf(ctx):
+    """Roll female: igual que !rw pero solo waifus"""
+    await tirar_rw(ctx, genero="F")
+
+@bot.command(name="rm", aliases=["husbando"])
+async def rm(ctx):
+    """Roll male: igual que !rw pero solo husbandos"""
+    await tirar_rw(ctx, genero="M")
+
 @bot.command(name="rwAdmin", aliases=["rwadmin"], hidden=True)
-async def rw_admin(ctx):
-    """Igual que !rw pero sin cooldown (ni de tirada ni de reclamo). Solo vos."""
+async def rw_admin(ctx, tipo: str = ""):
+    """Igual que !rw pero sin cooldown (ni de tirada ni de reclamo). Solo vos. Opcional: `!rwAdmin f` o `!rwAdmin m`."""
     if str(ctx.author.id) != ID_BANCA:
         await ctx.reply(embed=crear_embed(descripcion="Este comando es solo para el dueño de la banca."))
         return
-    await ejecutar_rw(ctx, admin=True)
+    genero = {"f": "F", "m": "M"}.get(tipo.strip().lower())
+    await ejecutar_rw(ctx, admin=True, genero=genero)
 
 @bot.command(name="rwreload")
 async def rwreload(ctx):
@@ -3818,8 +3852,13 @@ async def rwreload(ctx):
             f"{RANGOS_RAREZA[i][3]}: **{len(grupos[i])}** personaje(s)"
             for i in range(len(RANGOS_RAREZA))
         )
+        n_f, n_m = len(personajes_por_genero("F")), len(personajes_por_genero("M"))
+        sin_genero = len(personajes_cache) - n_f - n_m
         await ctx.reply(embed=crear_embed(
-            descripcion=f"🔄 Listo, cargué **{len(personajes_cache)}** personajes desde GitHub.\n\n{desglose}"
+            descripcion=(
+                f"🔄 Listo, cargué **{len(personajes_cache)}** personajes desde GitHub.\n"
+                f"👩 Waifus (`!rf`): **{n_f}** · 👨 Husbandos (`!rm`): **{n_m}** · sin género (solo `!rw`): **{sin_genero}**\n\n{desglose}"
+            )
         ))
     except Exception as e:
         await ctx.reply(embed=crear_embed(descripcion=f"❌ Hubo un error al recargar: {str(e)}"))
@@ -5731,7 +5770,9 @@ CATEGORIAS_HELP = [
     ]),
     ("🎴", "Gacha (personajes)", [
         [
-            "`!rw`\nTirás un personaje random. Los de más valor son más difíciles de sacar.\nCooldown: 4hs. Reclamar tiene su propio cooldown de 3hs.",
+            "`!rw`\nTirás un personaje random (waifus y husbandos mezclados). Los de más valor son más difíciles de sacar.\nCooldown: 4hs. Reclamar tiene su propio cooldown de 3hs.",
+            "`!rf` · también `!waifu`\nComo `!rw`, pero solo salen waifus. Comparte el cooldown con `!rw`.",
+            "`!rm` · también `!husbando`\nComo `!rw`, pero solo salen husbandos. Comparte el cooldown con `!rw`.",
             "`!winfo nombre`\nFicha de un personaje puntual, sin reclamarlo.\nEjemplo: `!winfo Gojo Satoru`",
             "`!coleccion [@alguien]` · también `!harem`\nVes los personajes que reclamaste (paginado).\nEjemplo: `!coleccion`",
             "`!vender personaje`\nVendés un personaje. Te llevás el 70% de su valor en Pesos. También sirve para Dólares: `!vender Dólar 5`.\nEjemplo: `!vender Gojo Satoru`",
@@ -5768,7 +5809,7 @@ CATEGORIAS_ADMINHELP = [
     ]),
     ("🎴", "Gacha / rw", [
         [
-            "`!rwAdmin`\nIgual que `!rw` pero sin cooldown (ni de tirada ni de reclamo).",
+            "`!rwAdmin [f/m]`\nIgual que `!rw` pero sin cooldown (ni de tirada ni de reclamo). Con `f` o `m` filtra por género.",
             "`!rwreload`\nRecarga `rw.json` desde GitHub sin reiniciar el bot.",
             "`!checkimg`\nRevisa qué links de imagen de los personajes están rotos.",
             "`!buscarimagenes [cantidad]` · también `!imgsearch`\nBuscás fotos para los personajes sin imagen (Guardar/Rechazar/Recargar).\nEjemplo: `!buscarimagenes 5`",
@@ -5969,7 +6010,7 @@ async def cinco_porciento_force(ctx):
     await ctx.reply(embed=crear_embed(
         titulo="🏦 5% forzado",
         descripcion=(
-            f"Le metiste el 5% a tu banco a la fuerza: **+{formatear_pesos(ganancia)}**.\n"
+            f"Le metiste el 5% a tu banco a la fuerza: **+{formatear_pesos_tx(ganancia)}**.\n"
             f"Banco actual: **{formatear_pesos(balances_cache[user_id]['banco'])}**"
         ),
     ))
