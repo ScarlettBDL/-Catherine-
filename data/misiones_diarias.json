@@ -1,30 +1,30 @@
 {
   "1468974197895336151": {
     "nombre": "Scarlett",
-    "dia": "2026-10-18",
+    "dia": "2026-10-19",
     "misiones": [
       {
-        "id": "d_apuestas_10",
-        "tipo": "apuestas_count",
-        "meta": 10,
-        "progreso": 10,
-        "completada": true
+        "id": "d_buy_5",
+        "tipo": "buy_count",
+        "meta": 5,
+        "progreso": 0,
+        "completada": false
       },
       {
-        "id": "d_rw_claim_2",
-        "tipo": "rw_claim",
+        "id": "d_usar_5",
+        "tipo": "usar_count",
+        "meta": 5,
+        "progreso": 0,
+        "completada": false
+      },
+      {
+        "id": "d_rw_count_2",
+        "tipo": "rw_count",
         "meta": 2,
         "progreso": 2,
         "completada": true
-      },
-      {
-        "id": "d_rw_claim_3",
-        "tipo": "rw_claim",
-        "meta": 3,
-        "progreso": 3,
-        "completada": true
       }
     ],
-    "bonus_dado": true
+    "bonus_dado": false
   }
 }
