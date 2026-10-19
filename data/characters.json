@@ -2599,6 +2599,60 @@
         "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/d/dd/407100-valis-x-valna-haha-to-musume-no-kuno-windows-screenshot-cham.jpg",
         "Fuente": "Spinoff Valis X which",
         "Valor": 15000
+      },
+      {
+        "Nombre": "Ryuu Lion",
+        "Imagen": "https://danfull.bushiroad.com/wp-content/themes/danfull/assets/images/common/character/img_chara_full_ryu-lion.png",
+        "Fuente": "DanMachi",
+        "Valor": 500000
+      },
+      {
+        "Nombre": "Ariadne Foxrot",
+        "Imagen": "https://static.wikia.nocookie.net/date-a-live/images/d/d0/Ariadne_Foxlot.jpg",
+        "Fuente": "Date A Live",
+        "Valor": 50000
+      },
+      {
+        "Nombre": "Marnie",
+        "Imagen": "https://static.wikia.nocookie.net/studio-ghibli/images/5/52/Marnie.png",
+        "Fuente": "When Marnie Was There",
+        "Valor": 18000
+      },
+      {
+        "Nombre": "Azuki Tomonaga",
+        "Imagen": "https://static.wikia.nocookie.net/brave/images/e/e3/Azuki.PNG",
+        "Fuente": "Brave Series",
+        "Valor": 30000
+      },
+      {
+        "Nombre": "Plym Machina",
+        "Imagen": "https://static.wikia.nocookie.net/battle-spirits/images/f/f6/Art_plym.jpg",
+        "Fuente": "Battle Spirits",
+        "Valor": 60000
+      },
+      {
+        "Nombre": "Charlotte Edgecumbe",
+        "Imagen": "https://static.wikia.nocookie.net/dantaliannoshoka/images/7/76/Charlotte_infobox.jpg",
+        "Fuente": "Dantalian no Shoka",
+        "Valor": 35000
+      },
+      {
+        "Nombre": "Yuuko Kamiya",
+        "Imagen": "https://static.wikia.nocookie.net/digimon-adventure5140/images/f/f4/Yuuko.png",
+        "Fuente": "Digimon Adventure",
+        "Valor": 35000
+      },
+      {
+        "Nombre": "Haruko Ichinose",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/5/59/Haruko_Ichinose.jpg",
+        "Fuente": "Swap⇔Swap",
+        "Valor": 10000
+      },
+      {
+        "Nombre": "Zefie",
+        "Imagen": "https://static.wikia.nocookie.net/dothack/images/5/5a/Zefie.jpg",
+        "Fuente": ".hack//",
+        "Valor": 65000
       }
     ]
   }
