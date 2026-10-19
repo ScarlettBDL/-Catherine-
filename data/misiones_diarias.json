@@ -7,8 +7,8 @@
         "id": "d_buy_5",
         "tipo": "buy_count",
         "meta": 5,
-        "progreso": 0,
-        "completada": false
+        "progreso": 3894,
+        "completada": true
       },
       {
         "id": "d_usar_5",
