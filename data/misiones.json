@@ -21,8 +21,8 @@
         "id": "rw_tiradas_15",
         "tipo": "rw_count",
         "meta": 15,
-        "progreso": 6,
-        "completada": false
+        "progreso": 15,
+        "completada": true
       }
     ],
     "bonus_dado": false
