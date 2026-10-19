@@ -2755,6 +2755,41 @@
         "Imagen": "https://static.wikia.nocookie.net/boysoverflowers/images/b/b4/Jody.jpg",
         "Fuente": "Boys Over Flowers",
         "Valor": 70000
+      },
+      {
+        "Nombre": "Hachi",
+        "Imagen": "https://static.wikia.nocookie.net/mahoushoujo-site/images/6/6d/Hachi.png",
+        "Fuente": "Mahou Shoujo Site",
+        "Valor": 19000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Hibika Sohma",
+        "Imagen": "https://static.wikia.nocookie.net/fruitsbasket/images/d/d7/Hibika_Sohma_Another.png",
+        "Fuente": "Fruits Basket",
+        "Valor": 8000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Nina Maehara",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/0/07/328670.jpg",
+        "Fuente": "Dropout Idol Fruit Tart",
+        "Valor": 30000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Louis James Moriarty",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/15/336564.jpg",
+        "Fuente": "Yuukoku no Moriarty",
+        "Valor": 15000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Yuuji Sakamoto",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/5/76951.jpg",
+        "Fuente": "Baka to Test to Shoukanjuu",
+        "Valor": 12000,
+        "Genero": "M"
       }
     ]
   }
