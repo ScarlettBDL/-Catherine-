@@ -2797,6 +2797,34 @@
         "Fuente": "Hello Kitty",
         "Valor": 19000,
         "Genero": "F"
+      },
+      {
+        "Nombre": "Reishi Munakata",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/6/170217.jpg",
+        "Fuente": "K",
+        "Valor": 11000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Shun Hashimoto",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/14/404513.jpg",
+        "Fuente": "Umibe no Étranger",
+        "Valor": 37000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Yuuko Kanoe",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/16/164633.jpg",
+        "Fuente": "Tasogare Otome x Amnesia",
+        "Valor": 750000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Ange d'Erlanger",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/c/c1/Ange.png",
+        "Fuente": "Granblue Fantasy",
+        "Valor": 40000,
+        "Genero": "F"
       }
     ]
   }
