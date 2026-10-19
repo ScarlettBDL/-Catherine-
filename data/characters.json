@@ -2563,6 +2563,42 @@
         "Imagen": "https://static.wikia.nocookie.net/orangetakanoichigo/images/8/89/Suwa_present_02.png/revision/latest/scale-to-width/360?cb=20160711032611",
         "Fuente": "Orange",
         "Valor": 35000
+      },
+      {
+        "Nombre": "Lillian Weinberg",
+        "Imagen": "https://static.wikia.nocookie.net/dr-stone/images/9/95/Lillian_Weinberg_Infobox.png",
+        "Fuente": "Dr. Stone",
+        "Valor": 22000
+      },
+      {
+        "Nombre": "Rin Kaga",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/7/124583.jpg",
+        "Fuente": "Usagi Drop",
+        "Valor": 290000
+      },
+      {
+        "Nombre": "Mia Miyake",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/3/31/Miyake_Mia.png",
+        "Fuente": "Wanna Skip School in the Infirmary?",
+        "Valor": 12000
+      },
+      {
+        "Nombre": "Balalaika",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/14/308173.jpg",
+        "Fuente": "Black Lagoon Omake",
+        "Valor": 440000
+      },
+      {
+        "Nombre": "Nina Sakura",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/11/82016.jpg",
+        "Fuente": "Ultra Maniac",
+        "Valor": 17000
+      },
+      {
+        "Nombre": "Cham",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/d/dd/407100-valis-x-valna-haha-to-musume-no-kuno-windows-screenshot-cham.jpg",
+        "Fuente": "Spinoff Valis X which",
+        "Valor": 15000
       }
     ]
   }
