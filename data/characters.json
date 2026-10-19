@@ -2689,6 +2689,48 @@
         "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/4/42/Meido----grin.jpg",
         "Fuente": "Heart Throbbing After-school",
         "Valor": 18000
+      },
+      {
+        "Nombre": "Nao Sadatsuka",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/9/92/Nao_Sadatsuka_mugshot_%28anime%29.png",
+        "Fuente": "Food Wars!",
+        "Valor": 6000
+      },
+      {
+        "Nombre": "Juubei Yagyuu",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/10/99431.jpg",
+        "Fuente": "Hyakka Ryouran: Samurai Girls",
+        "Valor": 20000
+      },
+      {
+        "Nombre": "Koruri",
+        "Imagen": "https://static.wikia.nocookie.net/7-seeds/images/7/78/Koruri1.jpg",
+        "Fuente": "7 Seeds",
+        "Valor": 18000
+      },
+      {
+        "Nombre": "Truffles",
+        "Imagen": "https://static.wikia.nocookie.net/animalcrossing/images/e/eb/Truffles_NH.png",
+        "Fuente": "Animal Crossing",
+        "Valor": 90000
+      },
+      {
+        "Nombre": "Fraulein Brocken",
+        "Imagen": "https://static.wikia.nocookie.net/kinnikuman/images/7/73/Fraulein.jpeg",
+        "Fuente": "Kinnikuman",
+        "Valor": 16000
+      },
+      {
+        "Nombre": "Ivy",
+        "Imagen": "https://static.wikia.nocookie.net/dragonquest/images/7/79/DQVI_-_Ivy.png",
+        "Fuente": "Dragon Quest",
+        "Valor": 20000
+      },
+      {
+        "Nombre": "Hatomura Manami",
+        "Imagen": "https://static.wikia.nocookie.net/bandori/images/f/f3/RAiSe%21_The_Story_of_my_Music_-_Ch.0003_Vol.0001_Pg.0001_-_Roll_mate.png",
+        "Fuente": "BanG Dream",
+        "Valor": 55000
       }
     ]
   }
