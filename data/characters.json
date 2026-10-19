@@ -2653,6 +2653,36 @@
         "Imagen": "https://static.wikia.nocookie.net/dothack/images/5/5a/Zefie.jpg",
         "Fuente": ".hack//",
         "Valor": 65000
+      },
+      {
+        "Nombre": "Aya Kimishima",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/3/3a/Tay_3.png",
+        "Fuente": "Sono Hanabira ni Kuchizuke wo",
+        "Valor": 76000
+      },
+      {
+        "Nombre": "Nene Sakura",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/11/315674.jpg",
+        "Fuente": "New Game!",
+        "Valor": 11000
+      },
+      {
+        "Nombre": "Makima",
+        "Imagen": "https://safebooru.org/images/325/3cc95b08b676488762d75bf40d422cbab492fb62.jpg",
+        "Fuente": "Chainsaw Man",
+        "Valor": 490000
+      },
+      {
+        "Nombre": "Ruby Rose",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/7/409720.jpg",
+        "Fuente": "RWBY: Hyousetsu Teikoku",
+        "Valor": 200000
+      },
+      {
+        "Nombre": "Wakahime",
+        "Imagen": "https://static.wikia.nocookie.net/cityhunter/images/5/50/Wakahime.jpg",
+        "Fuente": "City Hunter",
+        "Valor": 15000
       }
     ]
   }
