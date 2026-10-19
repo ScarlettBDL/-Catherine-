@@ -2790,6 +2790,13 @@
         "Fuente": "Baka to Test to Shoukanjuu",
         "Valor": 12000,
         "Genero": "M"
+      },
+      {
+        "Nombre": "Chu~Chu~Ta~co",
+        "Imagen": "https://static.wikia.nocookie.net/hellokitty/images/2/23/Sanrio_Characters_Chu~Chu~Ta~co_Image006.png",
+        "Fuente": "Hello Kitty",
+        "Valor": 19000,
+        "Genero": "F"
       }
     ]
   }
