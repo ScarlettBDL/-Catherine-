@@ -14,8 +14,8 @@
         "id": "d_usar_5",
         "tipo": "usar_count",
         "meta": 5,
-        "progreso": 0,
-        "completada": false
+        "progreso": 5,
+        "completada": true
       },
       {
         "id": "d_rw_count_2",
@@ -25,6 +25,6 @@
         "completada": true
       }
     ],
-    "bonus_dado": false
+    "bonus_dado": true
   }
 }
