@@ -2731,6 +2731,12 @@
         "Imagen": "https://static.wikia.nocookie.net/bandori/images/f/f3/RAiSe%21_The_Story_of_my_Music_-_Ch.0003_Vol.0001_Pg.0001_-_Roll_mate.png",
         "Fuente": "BanG Dream",
         "Valor": 55000
+      },
+      {
+        "Nombre": "Manabu Hatou",
+        "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/d/d9/Manabu_Hatou.jpg",
+        "Fuente": "Qualia the Purple",
+        "Valor": 15000
       }
     ]
   }
