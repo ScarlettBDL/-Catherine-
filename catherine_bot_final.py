@@ -331,7 +331,16 @@ async def cargar_personajes_desde_github():
             else:
                 resp.raise_for_status()
                 data = await resp.json()
-                contenido = base64.b64decode(data["content"]).decode("utf-8")
+                contenido_b64 = data.get("content")
+                if contenido_b64 and data.get("encoding") == "base64":
+                    contenido = base64.b64decode(contenido_b64).decode("utf-8")
+                else:
+                    # Archivos > 1 MB: la API de contenidos devuelve content vacío.
+                    # Se pide el mismo endpoint con Accept raw (soporta hasta 100 MB).
+                    headers_raw = {**headers, "Accept": "application/vnd.github.raw+json"}
+                    async with session.get(url, headers=headers_raw) as resp_raw:
+                        resp_raw.raise_for_status()
+                        contenido = await resp_raw.text(encoding="utf-8")
                 bruto = json.loads(contenido)
                 if isinstance(bruto, list):
                     personajes_cache = bruto
