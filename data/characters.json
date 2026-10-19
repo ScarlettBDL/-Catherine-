@@ -2737,6 +2737,24 @@
         "Imagen": "https://static.wikia.nocookie.net/yuripedia/images/d/d9/Manabu_Hatou.jpg",
         "Fuente": "Qualia the Purple",
         "Valor": 15000
+      },
+      {
+        "Nombre": "Nino",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/4/87153.jpg",
+        "Fuente": "Arakawa Under the Bridge",
+        "Valor": 255000
+      },
+      {
+        "Nombre": "Kaga",
+        "Imagen": "https://static.wikia.nocookie.net/all-worlds-alliance/images/3/3f/Kaga_Render_01.png/revision/latest?cb=20200815041831",
+        "Fuente": "Azur Lane",
+        "Valor": 480000
+      },
+      {
+        "Nombre": "Jody Grand",
+        "Imagen": "https://static.wikia.nocookie.net/boysoverflowers/images/b/b4/Jody.jpg",
+        "Fuente": "Boys Over Flowers",
+        "Valor": 70000
       }
     ]
   }
