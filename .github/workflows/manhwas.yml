@@ -1,0 +1,75 @@
+name: Importar manhwas y manhuas
+
+# Se corre a mano desde la pestaña Actions del repo (sirve desde el celular). Corre en los servidores de GitHub,
+# así que no hace falta dejar ningún dispositivo prendido. Tarda entre 30 y 90 minutos según la cantidad de obras.
+on:
+  workflow_dispatch:
+    inputs:
+      paises:
+        description: "Países (KR = manhwa, CN = manhua, TW = Taiwán), separados por espacio"
+        default: "KR CN"
+      obras:
+        description: "Cuántas obras populares bajar por país"
+        default: "1500"
+      mujeres:
+        description: "Porcentaje de mujeres en lo que se agrega"
+        default: "70"
+      aplicar:
+        description: "Reemplazar data/rw.json por el resultado (deja copia en data/rw_backup.json)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      PAISES: ${{ inputs.paises }}
+      OBRAS: ${{ inputs.obras }}
+      MUJERES: ${{ inputs.mujeres }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Si una corrida se corta (o pasa de las 5h), la siguiente sigue donde quedó
+      - name: Recuperar progreso anterior
+        uses: actions/cache/restore@v4
+        with:
+          path: out/anilist_cache.json
+          key: anilist-${{ github.run_id }}
+          restore-keys: anilist-
+
+      - name: Bajar personajes
+        run: python3 tools/obtener_manhwas.py --rw data/rw.json --salida out --paises $PAISES --obras "$OBRAS" --mujeres "$MUJERES" --pausa 1.0
+
+      - name: Guardar progreso
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: out/anilist_cache.json
+          key: anilist-${{ github.run_id }}
+
+      - name: Subir resultados (se descargan desde la corrida)
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultado-manhwas
+          path: |
+            out/rw_manhwas_nuevos.json
+            out/rw_actualizado.json
+
+      - name: Aplicar a data/rw.json
+        if: ${{ inputs.aplicar }}
+        run: |
+          cp data/rw.json data/rw_backup.json
+          cp out/rw_actualizado.json data/rw.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data/rw.json data/rw_backup.json
+          git commit -m "Agregar personajes de manhwas y manhuas a rw.json"
+          git push
