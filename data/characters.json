@@ -2825,6 +2825,69 @@
         "Fuente": "Granblue Fantasy",
         "Valor": 40000,
         "Genero": "F"
+      },
+      {
+        "Nombre": "Sabu",
+        "Imagen": "https://static.wikia.nocookie.net/naruto/images/8/8a/Sabu.png",
+        "Fuente": "Narutopedia",
+        "Valor": 51000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Jiro Nomura",
+        "Imagen": "https://static.wikia.nocookie.net/godzilla/images/a/a0/J_Nomura.png",
+        "Fuente": "Gojipedia",
+        "Valor": 58000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "France",
+        "Imagen": "https://cdn.myanimelist.net/images/characters/3/286555.jpg",
+        "Fuente": "Hetalia Axis Powers",
+        "Valor": 15000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Toshiyuki's mother",
+        "Imagen": "https://static.wikia.nocookie.net/paranoiaagent/images/f/f4/ToshiyukiMother.jpg",
+        "Fuente": "Paranoia Agent",
+        "Valor": 6000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Akemi",
+        "Imagen": "https://static.wikia.nocookie.net/kiseijuu/images/e/e2/Akemi.jpeg",
+        "Fuente": "Kiseijuu",
+        "Valor": 15000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Ogawa Kenji",
+        "Imagen": "https://static.wikia.nocookie.net/crowsxworst/images/b/b9/Dosuken.png",
+        "Fuente": "Crows x Worst",
+        "Valor": 17000,
+        "Genero": "M"
+      },
+      {
+        "Nombre": "Momoko Sakurayama",
+        "Imagen": "https://static.wikia.nocookie.net/patlabor/images/c/cb/Momoko_OVA.png",
+        "Fuente": "Patlabor",
+        "Valor": 12000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Cocoa Amaguri",
+        "Imagen": "https://static.wikia.nocookie.net/dragonball/images/a/a3/Cocoa_Amaguri.jpg",
+        "Fuente": "Dragon Ball",
+        "Valor": 75000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Elevating Operator",
+        "Imagen": "https://static.wikia.nocookie.net/swordartonline/images/4/45/Vol_12_-_289.png",
+        "Fuente": "Sword Art Online",
+        "Valor": 10000,
+        "Genero": "F"
       }
     ]
   }
