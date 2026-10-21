@@ -1,19 +1,12 @@
 {
   "1468974197895336151": {
     "nombre": "Scarlett",
-    "dia": "2026-10-20",
+    "dia": "2026-10-21",
     "misiones": [
       {
-        "id": "d_rw_count_2",
-        "tipo": "rw_count",
-        "meta": 2,
-        "progreso": 2,
-        "completada": true
-      },
-      {
-        "id": "d_robos_3",
-        "tipo": "robos_count",
-        "meta": 3,
+        "id": "d_apuestas_10",
+        "tipo": "apuestas_count",
+        "meta": 10,
         "progreso": 0,
         "completada": false
       },
@@ -21,6 +14,13 @@
         "id": "d_work_earn_100k",
         "tipo": "work_earn",
         "meta": 100000,
+        "progreso": 5215,
+        "completada": false
+      },
+      {
+        "id": "d_mendigar_recv_50k",
+        "tipo": "mendigar_recv",
+        "meta": 50000,
         "progreso": 0,
         "completada": false
       }
