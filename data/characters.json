@@ -2888,6 +2888,20 @@
         "Fuente": "Sword Art Online",
         "Valor": 10000,
         "Genero": "F"
+      },
+      {
+        "Nombre": "Yin and Yang",
+        "Imagen": "https://static.wikia.nocookie.net/bleach/images/f/f8/DDRYin_and_Yang_profile.png",
+        "Fuente": "Bleach",
+        "Valor": 55000,
+        "Genero": "F"
+      },
+      {
+        "Nombre": "Miche",
+        "Imagen": "https://static.wikia.nocookie.net/finalfantasy/images/e/ec/WotV_Miche.png",
+        "Fuente": "Final Fantasy",
+        "Valor": 34000,
+        "Genero": "M"
       }
     ]
   }
