@@ -2902,6 +2902,13 @@
         "Fuente": "Final Fantasy",
         "Valor": 34000,
         "Genero": "M"
+      },
+      {
+        "Nombre": "Hinata Okano",
+        "Imagen": "https://static.wikia.nocookie.net/assassinationclassroom/images/e/ec/Okano_anime_transparent.png",
+        "Fuente": "Assassination Classroom",
+        "Valor": 20000,
+        "Genero": "F"
       }
     ]
   }
