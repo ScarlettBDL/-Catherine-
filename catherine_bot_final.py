@@ -11,6 +11,7 @@ import asyncio
 import time
 import aiohttp
 import difflib
+import urllib.parse
 from collections import defaultdict
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
@@ -256,14 +257,9 @@ def formatear_pesos(numero):
     """1500000 -> '1.500.000 Pesos'. Toda la plata del bot se muestra así."""
     return f"{formatear_numero(numero)} Pesos"
 
-# Emoji propio del bot (subido en la app, funciona en cualquier servidor por su ID). Se usa SOLO en los mensajes de
-# transacciones (ganaste / perdiste / pagaste / guardaste...), no en balances, tienda ni rankings.
-# Si algún día no se ve (emoji borrado, etc.) se puede cambiar por "Pesos" para volver al texto de siempre.
-EMOJI_PESOS = "<:Pesos:1561804906472677406>"
-
 def formatear_pesos_tx(numero):
-    """1500000 -> '1.500.000 <emoji>'. Para el monto que se ganó/perdió/movió en una transacción."""
-    return f"{formatear_numero(numero)} {EMOJI_PESOS}"
+    """1500000 -> '1.500.000 Pesos'. Para el monto que se ganó/perdió/movió en una transacción."""
+    return f"{formatear_numero(numero)} Pesos"
 
 def formatear_tiempo_restante(segundos):
     """1h 30m / 45m / 12s, para mensajes de cooldown."""
@@ -6022,9 +6018,9 @@ CATEGORIAS_HELP = [
         ],
         # Subpágina 2: trabajo y dólar
         [
-            "`!w` · también `!work` / `!trabajar` / `!laburar` / `!currar`\nTrabajás y ganás entre 5.000 y 6.500 Pesos (con un mensaje random cada vez).\nCooldown: 3 minutos.",
+            "`!w` · también `!work` / `!trabajar` / `!laburar` / `!currar`\nTrabajás y ganás entre 5.000 y 6.500 Pesos.\nCooldown: 3 minutos.",
             "`!mendigar`\nAbrís una colecta de 10 minutos para que el resto te done plata.\nCooldown: 20 minutos.",
-            "`!dolar` · también `!dólar` / `!usd`\nCotización actual del Dólar Catherine. Cambia cada 4hs, nunca baja de 300 Pesos.",
+            "`!dolar` · también `!dólar` / `!usd`\nCotización actual del Dólar Catherine. Cambia cada 4hs.",
             "`!topdolar` · también `!topdólar`\nTop 10 de quién tiene más Dólares guardados.",
             "`!buy Dólar cantidad` · también `!comprar`\nComprás Dólares a la cotización actual.\nEjemplo: `!buy Dólar 10` o `!buy Dólar all`",
             "`!vender Dólar cantidad`\nVendés Dólares. Hay 2% de comisión.\nEjemplo: `!vender Dólar 5`",
@@ -6032,11 +6028,11 @@ CATEGORIAS_HELP = [
         # Subpágina 3: tienda e items
         [
             "`!shop` · también `!tienda`\nCatálogo completo, por categorías (con Previous/Next).",
-            "`!buy nombre [cantidad]` · también `!comprar`\nComprás algo de la tienda. La cantidad acepta `100k`, `all`, etc.\nEjemplo: `!buy Peluche de Ado` o `!buy Dólar 5`",
-            "`!inv [@alguien]` · también `!inventario`\nVes los objetos que compraste (paginado).\nEjemplo: `!inv`",
+            "`!buy nombre [cantidad]` · también `!comprar`\nComprás algo de la tienda. La cantidad acepta `100k`, `all`, etc.\nEjemplo: `!buy Café doble` o `!buy Dólar 5`",
+            "`!inv [@alguien]` · también `!inventario`\nVes los objetos que compraste.\nEjemplo: `!inv`",
             "`!invfo nombre del ítem`\nFicha de un ítem puntual.\nEjemplo: `!invfo Café doble`",
             "`!usar nombre` · también `!use`\nUsás un item de tu inventario (activa su efecto).\nEjemplo: `!usar Dado de la suerte`",
-            "`!autouse nombre`\nConfigurás que ese item se use solo en su momento. Volvé a correr el mismo comando para desactivarlo.\nEjemplo: `!autouse Pase VIP`",
+            "`!autouse nombre`\nConfigurás que ese item se use solo en su momento. Volvé a usar el mismo comando para desactivarlo.\nEjemplo: `!autouse Pase VIP`",
             "`!buffs [@alguien]` · también `!efectos`\nVes tus buffs activos, mejoras permanentes y cooldowns.\nEjemplo: `!buffs`",
         ],
     ]),
@@ -6077,10 +6073,15 @@ CATEGORIAS_HELP = [
             "-# Ganás XP por escribir mensajes (con cooldown de 15s) y por usar comandos. Cada nivel te da 2 puntos de perk.",
         ],
     ]),
+    ("🖼️", "Multimedia", [
+        [
+            "`!pin búsqueda` · también `!pinterest`\nBusca imágenes en Pinterest y te las muestra de a una, con Previous/Next.\nEjemplo: `!pin gatos aesthetic`",
+        ],
+    ]),
     ("⚙️", "Servidor", [
         [
             "`!changeprefix símbolo` · también `!setprefix` / `!prefix`\nCambia el prefijo de los comandos en este servidor (hace falta el permiso Administrar servidor). Sin símbolo te dice el actual.\nEjemplo: `!changeprefix ?` · `!changeprefix reset` vuelve a `!`.\nSi te olvidás cuál era, mencioname y escribí `prefix`.",
-            "`!language es|en` · también `!idioma`\nCambia el idioma en el que te contesto cuando charlamos (hace falta el permiso Administrar servidor). Por ahora los comandos y menús siguen en español.\nEjemplo: `!language en`",
+            "`!language es|en` · también `!idioma`\nCambia el idioma en que está el bot. (hace falta el permiso Administrar servidor). Por ahora los comandos y menús siguen en español.\nEjemplo: `!language en`",
         ],
     ]),
 ]
@@ -6971,18 +6972,200 @@ async def mp3(ctx, *, entrada: str = None):
         print(f"⚠️ Error en !mp3: {e!r}", flush=True)
         await mostrar_error("Hubo un error. Probá de nuevo en un rato.")
 
+# ===================== PINTEREST (!pin) =====================
+# Adaptado del script de referencia "Pinterest.py": usa el endpoint interno de
+# búsqueda de la web de Pinterest (no hay API oficial) y reutiliza los headers
+# que evitan el 403. Devuelve links directos de imagen para mostrarlos en un
+# embed con Previous/Next, como el resto de las vistas del bot.
+
+PINTEREST_MAX_IMAGENES = 24
+
+def _pinterest_formato_no_soportado(url):
+    """Discord no renderiza HEIC/HEIF/AVIF en los embeds. Si el original viene en
+    uno de esos formatos, conviene usar la versión 736x (siempre jpg/png)."""
+    return urllib.parse.urlparse(url).path.lower().endswith((".heic", ".heif", ".avif"))
+
+async def buscar_imagenes_pinterest(query, cantidad=PINTEREST_MAX_IMAGENES):
+    """Devuelve hasta `cantidad` links directos de imagen para esa búsqueda.
+    Lista vacía si Pinterest falla, bloquea la request o cambió la estructura
+    de la respuesta."""
+    payload = {
+        "options": {
+            "isPrefetch": False,
+            "query": query,
+            "scope": "pins",
+            "page_size": cantidad,
+        },
+        "context": {},
+    }
+    params = {
+        "source_url": f"/search/pins/?q={urllib.parse.quote(query)}&rs=typed",
+        "data": json.dumps(payload),
+        "_": int(time.time() * 1000),
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*, q=0.01",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Referer": "https://www.pinterest.com/",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Pinterest-AppState": "active",
+        "X-Pinterest-Source-Url": "/ideas/",
+        "X-Pinterest-PWS-Handler": "www/ideas.js",
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://in.pinterest.com/resource/BaseSearchResource/get/",
+                params=params,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status != 200:
+                    print(f"[buscar_imagenes_pinterest] Pinterest respondió {resp.status} para '{query}'", flush=True)
+                    return []
+                data = await resp.json(content_type=None)
+    except Exception as e:
+        print(f"[buscar_imagenes_pinterest] Error buscando '{query}': {e}", flush=True)
+        return []
+
+    try:
+        resultados = data["resource_response"]["data"]["results"]
+    except (KeyError, TypeError):
+        print(f"[buscar_imagenes_pinterest] Respuesta inesperada para '{query}'", flush=True)
+        return []
+
+    imagenes, vistos = [], set()
+    for pin in resultados:
+        if not isinstance(pin, dict):
+            continue
+
+        # Cada pin trae las imágenes por tamaño; preferimos la original y, si no
+        # está, caemos a las versiones más chicas. Algunas respuestas usan
+        # "images" y otras traen los tamaños directo en "orig".
+        url = None
+        respaldo = None   # por si TODOS los tamaños vienen en un formato que Discord no muestra
+        for contenedor in ("images", "orig"):
+            bloque = pin.get(contenedor)
+            if not isinstance(bloque, dict):
+                continue
+            for tamano in ("orig", "736x", "564x", "474x"):
+                dato = bloque.get(tamano)
+                if not (isinstance(dato, dict) and isinstance(dato.get("url"), str)):
+                    continue
+                if _pinterest_formato_no_soportado(dato["url"]):
+                    respaldo = respaldo or dato["url"]
+                    continue
+                url = dato["url"]
+                break
+            if url:
+                break
+        if not url:
+            for clave in ("image_url", "image"):
+                valor = pin.get(clave)
+                if isinstance(valor, str) and valor.startswith("http"):
+                    if _pinterest_formato_no_soportado(valor):
+                        respaldo = respaldo or valor
+                        continue
+                    url = valor
+                    break
+        if not url:
+            url = respaldo
+
+        if url and url not in vistos:
+            vistos.add(url)
+            imagenes.append(url)
+        if len(imagenes) >= cantidad:
+            break
+    return imagenes
+
+class PinterestView(discord.ui.View):
+    """Muestra las fotos de una búsqueda de a una, con Previous/Next. Solo quien
+    hizo la búsqueda puede pasar de imagen."""
+
+    def __init__(self, autor, busqueda, imagenes):
+        super().__init__(timeout=300)
+        self.autor = autor
+        self.busqueda = busqueda
+        self.imagenes = imagenes
+        self.indice = 0
+        self.mensaje = None
+        self._actualizar_botones()
+
+    def _actualizar_botones(self):
+        self.anterior.disabled = self.indice == 0
+        self.siguiente.disabled = self.indice >= len(self.imagenes) - 1
+
+    def construir_embed(self):
+        embed = crear_embed(
+            titulo=f"📌 Pinterest — {self.busqueda}",
+            footer=f"Imagen {self.indice + 1}/{len(self.imagenes)}",
+        )
+        embed.set_image(url=self.imagenes[self.indice])
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.autor.id:
+            await interaction.response.send_message("Hacé tu propia búsqueda con `!pin` para moverte entre las fotos.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.secondary)
+    async def anterior(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.indice -= 1
+        self._actualizar_botones()
+        await interaction.response.edit_message(embed=self.construir_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def siguiente(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.indice += 1
+        self._actualizar_botones()
+        await interaction.response.edit_message(embed=self.construir_embed(), view=self)
+
+    async def on_timeout(self):
+        if self.mensaje is None:
+            return
+        for item in self.children:
+            item.disabled = True
+        try:
+            await self.mensaje.edit(view=self)
+        except discord.HTTPException:
+            pass
+
+@bot.command(name="pin", aliases=["pinterest"])
+async def pin(ctx, *, busqueda: str = None):
+    """Busca imágenes en Pinterest y las muestra en un embed con Previous/Next"""
+    busqueda = (busqueda or "").strip()[:100]
+    if not busqueda:
+        await ctx.reply(embed=crear_embed(descripcion="Decime qué buscar. Ejemplo: `!pin gatos`"))
+        return
+
+    aviso = await ctx.reply(embed=crear_embed(descripcion=f"🔎 Buscando «{busqueda}» en Pinterest..."))
+    imagenes = await buscar_imagenes_pinterest(busqueda)
+    if not imagenes:
+        await aviso.edit(embed=crear_embed(
+            descripcion=f"😕 No encontré imágenes para «{busqueda}». Probá con otra búsqueda."
+        ))
+        return
+
+    vista = PinterestView(ctx.author, busqueda, imagenes)
+    vista.mensaje = aviso
+    await aviso.edit(embed=vista.construir_embed(), view=vista)
+# ===================== FIN PINTEREST =====================
+
 # Iniciar el bot.
-# Si el bot se cae, antes de salir:
+# Si el bot se cae, NO se reinicia solo. Cada reinicio es un login nuevo a
+# Discord, y Discord limita los logins por día (1000): pasarse RESETEA el token
+# del bot. Por eso:
 #  1) Guardamos todo en GitHub: sin esto se pierde lo ocurrido desde el último guardado (hasta 15 min).
-#  2) ESPERAMOS un buen rato. Render reinicia el proceso al instante al salir, y cada reinicio es un login nuevo a Discord:
-#     Discord limita los logins por día (1000) y, si se pasa, RESETEA EL TOKEN del bot. Un bot que se cae y se reinicia
-#     cada 30 segundos se come ese límite en menos de un día. Esperando, los reintentos quedan espaciados.
-#     El servidor de health-check sigue respondiendo mientras tanto.
-ESPERA_CAIDA_SEGUNDOS = 10 * 60
-ESPERA_429_SEGUNDOS = 15 * 60
+#  2) Nos quedamos vivos sin reintentar. El servidor de health-check sigue respondiendo,
+#     así Render no reinicia el proceso, pero el bot queda offline hasta que lo reinicies a mano.
+# Además se desactiva el auto-reconnect de discord.py (reconnect=False), para que
+# un corte de conexión no dispare una cadena de logins.
 
 try:
-    bot.run(os.environ.get("DISCORD_TOKEN"))
+    bot.run(os.environ.get("DISCORD_TOKEN"), reconnect=False)
 except Exception as e:
     print(f"💥 El bot se cayó: {e!r}", flush=True)
     try:
@@ -6993,13 +7176,12 @@ except Exception as e:
     if isinstance(e, discord.LoginFailure):
         print("🔑 Discord rechazó el token (inválido o reseteado). Generá uno nuevo en el Developer Portal "
               "y actualizá la variable DISCORD_TOKEN en Render.", flush=True)
-        espera = ESPERA_CAIDA_SEGUNDOS
     elif isinstance(e, discord.HTTPException) and e.status == 429:
         print("⛔ Discord devolvió 429 (bloqueo temporal de la IP).", flush=True)
-        espera = ESPERA_429_SEGUNDOS
-    else:
-        espera = ESPERA_CAIDA_SEGUNDOS
 
-    print(f"⏳ Espero {espera // 60} minutos antes de salir para no reiniciarme en bucle.", flush=True)
-    time.sleep(espera)
-    raise
+    print("🛑 No me reinicio sola para no gastar logins de Discord. "
+          "Reiniciá el servicio a mano desde Render cuando quieras que vuelva.", flush=True)
+
+    # En vez de salir (Render reiniciaría el proceso al instante y habría otro
+    # login), dormimos para siempre: no consume CPU y el health-check sigue vivo.
+    threading.Event().wait()
