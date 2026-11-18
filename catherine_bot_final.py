@@ -304,7 +304,7 @@ ultima_actividad_usuario = {}
 # Cooldowns manuales para !rw y !w. Los hacemos a mano (en vez de usar
 # @commands.cooldown) porque los items de la tienda necesitan poder
 # reducirlos o resetearlos dinámicamente.
-COOLDOWN_RW_SEGUNDOS = 4 * 60 * 60
+COOLDOWN_RW_SEGUNDOS = 20 * 60
 COOLDOWN_W_SEGUNDOS = 3 * 60
 COOLDOWN_W_MINIMO = 60  # piso del cooldown de !w, ni el Café de especialidad lo baja de acá
 cooldown_rw_usuario = {}   # user_id (str) -> timestamp hasta el que no puede tirar !rw
@@ -6054,7 +6054,7 @@ CATEGORIAS_HELP = [
     ]),
     ("🎴", "Gacha (personajes)", [
         [
-            "`!rw`\nTirás un personaje random (waifus y husbandos mezclados). Los de más valor son más difíciles de sacar.\nCooldown: 4hs. Reclamar tiene su propio cooldown de 3hs.",
+            "`!rw`\nTirás un personaje random (waifus y husbandos mezclados). Los de más valor son más difíciles de sacar.\nCooldown: 20 min. Reclamar tiene su propio cooldown de 3hs.",
             "`!rf` · también `!waifu`\nComo `!rw`, pero solo salen waifus. Comparte el cooldown con `!rw`.",
             "`!rm` · también `!husbando`\nComo `!rw`, pero solo salen husbandos. Comparte el cooldown con `!rw`.",
             "`!winfo nombre`\nFicha de un personaje puntual, sin reclamarlo.\nEjemplo: `!winfo Gojo Satoru`",
